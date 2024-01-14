@@ -1,9 +1,10 @@
 #ifndef STORY_H
 #define STORY_H
 
-#include "agent.h"
-#include "event.h"
+#include "utils.h"
 #include "expression.h"
+#include "event.h"
+#include "agent.h"
 
 struct Story
 {
@@ -12,10 +13,13 @@ struct Story
   int open_event_id = 0;
   int open_event_template_id = 0;
 
+  std::unordered_map<int, std::string> reason_db;
+  std::unordered_map<int, std::string> relation_db;
+
   std::unordered_map<int, Event> events;
   std::unordered_map<int, EventTemplate> event_templates;
-  std::unordered_map<int, Agent> agents;
   std::unordered_map<std::string, Expression> expressions;
+  std::unordered_map<int, Agent> agents;
 
   Story();
 

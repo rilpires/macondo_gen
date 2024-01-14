@@ -13,15 +13,24 @@ std::vector<std::string> Utils::split(std::string str, const char *delimiters)
   return tokens;
 }
 
-std::string &Utils::replaceAll(std::string &context, const std::string &from, const std::string &to)
+std::string Utils::replaceAll(const std::string &context, const std::string &from, const std::string &to)
 {
+  std::string ret(context);
   size_t start_pos = 0;
-  while ((start_pos = context.find(from, start_pos)) != std::string::npos)
+  while ((start_pos = ret.find(from, start_pos)) != std::string::npos)
   {
-    context.replace(start_pos, from.length(), to);
+    ret.replace(start_pos, from.length(), to);
     start_pos += to.length();
   }
-  return context;
+  return ret;
+}
+
+std::string Utils::replaceAll(const std::string &context, const StringMap &replacements)
+{
+  std::string ret(context);
+  for (auto &replacement : replacements)
+    ret = replaceAll(ret, replacement.first, replacement.second);
+  return ret;
 }
 
 json Utils::loadJSON(std::string filename)

@@ -1,5 +1,9 @@
 #include "story.h"
 
+#include "agent.h"
+#include "event.h"
+#include "expression.h"
+
 Story::Story()
 {
 }
@@ -25,6 +29,14 @@ void Story::buildFromJSON(json &story_json)
       if (!expression_json.contains("expression") || !expression_json["expression"].is_string())
         continue;
       expressions.emplace(expression_json["name"].get<std::string>(), Expression(expression_json["expression"].get<std::string>()));
+    }
+
+    // Build event templates
+    for (auto &event_template_json : story_json["event_templates"])
+    {
+      EventTemplate event_template(open_event_template_id++, event_template_json);
+      event_template.story = this;
+      event_templates.emplace(event_template.id, event_template);
     }
   }
   catch (const std::exception &e)

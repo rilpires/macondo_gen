@@ -1,7 +1,9 @@
 #include "agent.h"
 #include "story.h"
 #include "expression.h"
-#include "parameter.h"
+#include "variable.h"
+
+Agent Agent::invalid_agent;
 
 Agent::Agent(int id, int current_time) : id(id), current_time(current_time)
 {
@@ -27,9 +29,9 @@ bool Agent::buildFromJSON(json &agent_json)
     if (agent_json.contains("parameters") && agent_json["parameters"].is_object())
       for (auto &parameter : agent_json["parameters"].items())
         if (parameter.value().is_number())
-          parameters.emplace(parameter.key(), Parameter(parameter.value().get<double>()));
+          parameters.emplace(parameter.key(), Variable(parameter.value().get<double>()));
         else
-          std::cerr << "Parameter " << parameter.key() << " of agent " << id << " is not a number" << std::endl;
+          std::cerr << "Variable " << parameter.key() << " of agent " << id << " is not a number" << std::endl;
   }
   catch (const std::exception &e)
   {
@@ -39,19 +41,33 @@ bool Agent::buildFromJSON(json &agent_json)
   return true;
 }
 
-Agent &Agent::updateParameter(std::string name, Parameter value)
+Agent &Agent::updateVariable(std::string name, Variable value)
 {
   if (parameters.find(name) != parameters.end())
     parameters[name] = value;
   return *this;
 };
 
-Parameter &Agent::getParameter(std::string name)
+Variable Agent::getVariable(std::string name) const
 {
-  return parameters[name];
+
+  if ((parameters.size() > 0) && parameters.find(name) != parameters.end())
+  {
+    return parameters.find(name)->second;
+  }
+  else if ((story != nullptr) && (story->expressions.size() > 0) && (story->expressions.find(name) != story->expressions.end()))
+  {
+    const Expression &e = (story->expressions.find(name)->second);
+    return e.evaluate(*this, *this);
+  }
+  else
+  {
+    std::cerr << "Variable " << name << " not found" << std::endl;
+    return Variable();
+  }
 };
 
-bool Agent::hasParameter(std::string name) const
+bool Agent::hasVariable(std::string name) const
 {
   if (parameters.find(name) != parameters.end())
     return true;
@@ -65,25 +81,7 @@ bool Agent::hasParameter(std::string name) const
   }
 }
 
-const Parameter Agent::operator[](const std::string &name) const
+Variable &Agent::operator[](const std::string &name)
 {
-  if ((parameters.size() > 0) && parameters.find(name) != parameters.end())
-  {
-    return parameters.find(name)->second;
-  }
-  else if ((story != nullptr) && (story->expressions.size() > 0) && (story->expressions.find(name) != story->expressions.end()))
-  {
-    const Expression &e = (story->expressions.find(name)->second);
-    return e.evaluate(*this, *this);
-  }
-  else
-  {
-    std::cerr << "Parameter " << name << " not found" << std::endl;
-    return Parameter();
-  }
-}
-
-Parameter &Agent::operator[](const std::string &name)
-{
-  return parameters.find(name)->second;
+  return parameters[name];
 }

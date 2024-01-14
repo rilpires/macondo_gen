@@ -2,7 +2,13 @@
 #define EXPRESSION_H
 
 #include "utils.h"
-#include "agent.h"
+
+struct Agent;
+struct Variable;
+
+// A remainder: 🐧 is a strictly prohibited character of expression strings.
+// It is used in the process of tokenizing "glued" expressions like "(self).name"
+// turning into "( self ) . name".
 
 enum EXPRESSION_TOKENS : int
 {
@@ -14,6 +20,14 @@ enum EXPRESSION_TOKENS : int
   EXPRESSION_OPERATOR_DIVIDE,
   EXPRESSION_OPEN_PARENTHESIS,
   EXPRESSION_CLOSE_PARENTHESIS,
+  EXPRESSION_POINT_ACCESS,
+  EXPRESSION_TOKEN_SELF,
+  EXPRESSION_TOKEN_OTHER,
+  EXPRESSION_TOKEN_GROUP,
+
+  // functions...
+  EXPRESSION_TOKEN_ABS,
+
   EXPRESSION_TOKEN_NOOP,
   EXPRESSION_TOKEN_INVALID
 };
@@ -24,7 +38,8 @@ struct Token
   EXPRESSION_TOKENS token_type;
   double constant_value;
 
-  Token(std::string token_string = "");
+  Token(double constant_value = 0);
+  Token(std::string token_string);
   static std::vector<Token> tokenize(std::string expression_string);
 };
 
@@ -34,13 +49,16 @@ struct Expression
   Token token;
   std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>> subexpressions;
 
-  Expression(std::string expression_string = "");
+  Expression(double constant_value = 0);
+  Expression(std::string expression_string);
   ~Expression();
 
   // gonna private this when class'ing it up
   static Expression *fromTokens(const std::vector<Token> &tokens);
 
-  double evaluate(const Agent &agent1, const Agent &agent2) const;
+  Variable evaluate(const Agent &agent1, const Agent &agent2) const;
+
+  std::string toString() const;
 };
 
 #endif // !EXPRESSION_H

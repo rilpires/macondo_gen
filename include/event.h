@@ -3,14 +3,28 @@
 
 #include <unordered_map>
 #include <string>
-#include "parameter.h"
+#include "variable.h"
+#include "expression.h"
+
+enum EVENT_TYPE
+{
+  EVENT_TYPE_SELF,
+  EVENT_TYPE_RELATION
+};
+
+struct Story;
 
 struct EventTemplate
 {
+  Story *story = nullptr;
   const int id;
+  EVENT_TYPE type = EVENT_TYPE_SELF;
   std::string pretty_name;
-  std::unordered_map<std::string, Parameter> default_parameters;
-  // calculated with....
+  std::string reason;
+  std::unordered_map<std::string, Variable> default_parameters;
+  Expression expression;
+
+  EventTemplate(int id, json &event_template_json);
 };
 
 struct Event
@@ -18,23 +32,14 @@ struct Event
   const int id;
   const double time;
   const EventTemplate &_template;
-  const int agent_id;
+  const int agent_id = -1;
   const int other_agent_id = -1;
-  std::unordered_map<std::string, Parameter> parameters;
 
-  Event(int id, double time, int agent_id, const EventTemplate &_template) : id(id), time(time), agent_id(agent_id), _template(_template) {}
+  Event(int id, double time, int agent_id, const EventTemplate &_template);
 
-  std::string buildExplanation()
-  {
-    std::string explanation = "Event " + _template.pretty_name + " was generated with parameters: ";
-    for (auto &parameter : parameters)
-    {
-      explanation += parameter.first + " = " + parameter.second.toString();
-      if (parameter.first != parameters.end()->first)
-        explanation += ", ";
-    }
-    return explanation;
-  }
+  Agent &getAgent();
+  Agent &getOtherAgent();
+  std::string buildExplanation();
 };
 
 #endif // !EVENT_H
