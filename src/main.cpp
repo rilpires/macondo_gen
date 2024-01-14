@@ -1,9 +1,15 @@
 
 #include "utils.h"
+#include "agent.h"
+#include "expression.h"
+#include "story.h"
 
 int main()
 {
-  Agent a = Agent(1000, 0);
+  Story story;
+  json j = Utils::loadJSON("storydef.json");
+  story.buildFromJSON(j);
+  Agent a = story.agents.at(0);
   auto v = Utils::split("Hello, World!", "l, ");
 
   Expression e = Expression("1 + 2 * 3");
@@ -23,6 +29,20 @@ int main()
 
   Expression e6 = Expression("2*2 + 3*3");
   std::cout << "Expression result of " << e6.expression_string << " : " << e6.evaluate(a, a) << std::endl;
+
+  Expression e7 = Expression("0-1-1+1-1+1-0");
+  std::cout << "Expression result of " << e7.expression_string << " : " << e7.evaluate(a, a) << std::endl;
+
+  Expression e8 = Expression("-0+((1))-1+1-1-1-0");
+  std::cout << "Expression result of " << e8.expression_string << " : " << e8.evaluate(a, a) << std::endl;
+
+  Expression e9 = Expression("wealth + 1");
+  std::cout << "Expression result of " << e9.expression_string << " : " << e9.evaluate(a, a) << std::endl;
+
+  Expression e10 = Expression("2*rebel - rebel + rebel*rebel*rebel");
+  std::cout << "Expression result of " << e10.expression_string << " : " << e10.evaluate(a, a) << std::endl;
+
+  std::cout << "Bye!" << std::endl;
 
   return 0;
 }

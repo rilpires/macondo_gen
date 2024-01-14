@@ -23,3 +23,20 @@ std::string &Utils::replaceAll(std::string &context, const std::string &from, co
   }
   return context;
 }
+
+json Utils::loadJSON(std::string filename)
+{
+  try
+  {
+    std::ifstream file(filename);
+    json j;
+    file >> j;
+    file.close();
+    return j;
+  }
+  catch (std::exception &e)
+  {
+    std::cout << "Error loading JSON file " << filename << " : " << e.what() << std::endl;
+    return json();
+  }
+}

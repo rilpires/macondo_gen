@@ -1,10 +1,13 @@
-#include "utils.h"
+#include "expression.h"
 
 Token::Token(std::string token_string)
 {
   this->token_string = token_string;
-  if (token_string == "")
+  if (token_string.size() == 0)
+  {
     this->token_type = EXPRESSION_TOKEN_NOOP;
+    this->constant_value = 0;
+  }
   else if (token_string == "+")
     this->token_type = EXPRESSION_OPERATOR_ADD;
   else if (token_string == "-")
@@ -17,13 +20,23 @@ Token::Token(std::string token_string)
     this->token_type = EXPRESSION_OPEN_PARENTHESIS;
   else if (token_string == ")")
     this->token_type = EXPRESSION_CLOSE_PARENTHESIS;
-  else if (token_string.find_first_not_of("0123456789.") == std::string::npos)
+  else if (
+      (token_string.find_first_not_of("0123456789.") == std::string::npos))
   {
     this->token_type = EXPRESSION_CONSTANT;
     this->constant_value = std::stod(token_string);
   }
-  else
+  else if (
+      (token_string.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") == std::string::npos) &&
+      (token_string.find_first_not_of("0123456789") == 0))
+  {
     this->token_type = EXPRESSION_VARIABLE;
+  }
+  else
+  {
+    std::cout << "Unexpected token : " << token_string << std::endl;
+    this->token_type = EXPRESSION_TOKEN_INVALID;
+  }
 };
 
 Expression::Expression(std::string expression_string)
@@ -32,24 +45,24 @@ Expression::Expression(std::string expression_string)
   this->token.token_type = EXPRESSION_TOKEN_NOOP;
   if (expression_string.length() > 0)
   {
-    subexpressions.first = fromTokens(Token::tokenize(expression_string));
+    subexpressions.first = std::shared_ptr<Expression>(fromTokens(Token::tokenize(expression_string)));
   }
 }
 
 Expression::~Expression()
 {
-  if (subexpressions.first != NULL)
-    delete subexpressions.first;
-  if (subexpressions.second != NULL)
-    delete subexpressions.second;
+  // this is my first time trusting shared_ptr... kinda scary!
+  // if (subexpressions.first.get() != NULL)
+  //   delete subexpressions.first.get();
+  // if (subexpressions.second.get() != NULL)
+  //   delete subexpressions.second.get();
 }
 
 std::vector<Token> Token::tokenize(std::string expression_string)
 {
   // we should split glued tokens like "1+2" into "1", "+", "2"
   // I'll use a cheap trick to do this: insert spaces before and after operators
-
-  // expression_string.replace()
+  // Later gotta be careful with parenthesis though (function call)
 
   Utils::replaceAll(expression_string, "+", " + ");
   Utils::replaceAll(expression_string, "-", " - ");
@@ -90,7 +103,7 @@ Expression *Expression::fromTokens(const std::vector<Token> &tokens)
     if (token.token_type == EXPRESSION_CLOSE_PARENTHESIS)
     {
       parenthesis_count++;
-      sequence_start = true;
+      sequence_start = false;
     }
     else if (token.token_type == EXPRESSION_OPEN_PARENTHESIS)
     {
@@ -128,8 +141,8 @@ Expression *Expression::fromTokens(const std::vector<Token> &tokens)
     {
       Expression *expression = new Expression();
       expression->token = tokens[i];
-      expression->subexpressions.first = fromTokens(std::vector<Token>(tokens.begin(), tokens.begin() + i));
-      expression->subexpressions.second = fromTokens(std::vector<Token>(tokens.begin() + i + 1, tokens.end()));
+      expression->subexpressions.first = std::shared_ptr<Expression>(fromTokens(std::vector<Token>(tokens.begin(), tokens.begin() + i)));
+      expression->subexpressions.second = std::shared_ptr<Expression>(fromTokens(std::vector<Token>(tokens.begin() + i + 1, tokens.end())));
       expression->expression_string = expression_string;
       return expression;
     }
@@ -150,8 +163,8 @@ Expression *Expression::fromTokens(const std::vector<Token> &tokens)
     {
       Expression *expression = new Expression();
       expression->token = tokens[i];
-      expression->subexpressions.first = fromTokens(std::vector<Token>(tokens.begin(), tokens.begin() + i));
-      expression->subexpressions.second = fromTokens(std::vector<Token>(tokens.begin() + i + 1, tokens.end()));
+      expression->subexpressions.first = std::shared_ptr<Expression>(fromTokens(std::vector<Token>(tokens.begin(), tokens.begin() + i)));
+      expression->subexpressions.second = std::shared_ptr<Expression>(fromTokens(std::vector<Token>(tokens.begin() + i + 1, tokens.end())));
       expression->expression_string = expression_string;
       return expression;
     }
@@ -173,7 +186,7 @@ Expression *Expression::fromTokens(const std::vector<Token> &tokens)
       std::cout << "Unexpected token : " << token.token_string << std::endl;
     }
   }
-  else if ((tokens.size() >= 2) && (tokens[0].token_type == EXPRESSION_OPEN_PARENTHESIS) && (tokens[tokens.size() - 1].token_type == EXPRESSION_CLOSE_PARENTHESIS))
+  else if ((tokens.size() >= 3) && (tokens[0].token_type == EXPRESSION_OPEN_PARENTHESIS) && (tokens[tokens.size() - 1].token_type == EXPRESSION_CLOSE_PARENTHESIS))
   {
     return fromTokens(std::vector<Token>(tokens.begin() + 1, tokens.end() - 1));
   }
@@ -195,7 +208,7 @@ double Expression::evaluate(const Agent &agent1, const Agent &agent2) const
   {
   case EXPRESSION_VARIABLE:
   {
-    ret = agent1[token.token_string].double_value;
+    ret = agent1[token.token_string].toDouble();
     break;
   }
   case EXPRESSION_CONSTANT:

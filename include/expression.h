@@ -2,8 +2,9 @@
 #define EXPRESSION_H
 
 #include "utils.h"
+#include "agent.h"
 
-enum EXPRESSION_TOKENS
+enum EXPRESSION_TOKENS : int
 {
   EXPRESSION_VARIABLE,
   EXPRESSION_CONSTANT,
@@ -13,7 +14,8 @@ enum EXPRESSION_TOKENS
   EXPRESSION_OPERATOR_DIVIDE,
   EXPRESSION_OPEN_PARENTHESIS,
   EXPRESSION_CLOSE_PARENTHESIS,
-  EXPRESSION_TOKEN_NOOP
+  EXPRESSION_TOKEN_NOOP,
+  EXPRESSION_TOKEN_INVALID
 };
 
 struct Token
@@ -30,11 +32,12 @@ struct Expression
 {
   std::string expression_string;
   Token token;
-  std::pair<Expression *, Expression *> subexpressions;
+  std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>> subexpressions;
 
   Expression(std::string expression_string = "");
   ~Expression();
 
+  // gonna private this when class'ing it up
   static Expression *fromTokens(const std::vector<Token> &tokens);
 
   double evaluate(const Agent &agent1, const Agent &agent2) const;
