@@ -164,8 +164,14 @@ int main()
       std::cout << "Available commands:" << std::endl;
       std::cout << "  JSON <filename>" << std::endl;
       std::cout << "  PROCEED <time>" << std::endl;
-      std::cout << "  LIST <type>" << std::endl;
-      std::cout << "  HELP" << std::endl;
+      std::cout << "  LIST AGENTS" << std::endl;
+      std::cout << "  LIST EVENTS" << std::endl;
+      std::cout << "  LIST EVENT_TEMPLATES" << std::endl;
+      std::cout << "  TIME" << std::endl;
+      std::cout << "  POP <number>" << std::endl;
+      std::cout << "  UPDATE AGENT PARAM <agent_id> <parameter_name> <value>" << std::endl;
+      std::cout << "  UPDATE AGENT LABEL <agent_id> <label_key> <label_value>" << std::endl;
+      std::cout << "  UPDATE EVENT_TEMPLATE EXPRESSION <event_template_id> <value>" << std::endl;
       std::cout << "  EXIT" << std::endl;
     }
     else
