@@ -26,10 +26,11 @@ struct Agent
 
   bool buildFromJSON(json &agent_json);
 
+  bool hasVariable(std::string name) const;
   Agent &updateVariable(std::string name, Variable value);
   Variable getVariable(std::string name) const;
 
-  bool hasVariable(std::string name) const;
+  void updateRelationship(int other_agent_id, std::string name, Variable value);
 
   Variable &operator[](const std::string &name);
 };

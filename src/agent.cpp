@@ -60,6 +60,12 @@ Variable Agent::getVariable(std::string name) const
     const Expression &e = (story->expressions.find(name)->second);
     return e.evaluate(*this, *this);
   }
+  else if (other_agent_id != -1 &&
+           (relationships.find(other_agent_id) != relationships.end()) &&
+           (relationships.at(other_agent_id).find(name) != relationships.at(other_agent_id).end()))
+  {
+    return relationships.at(other_agent_id).at(name);
+  }
   else
   {
     std::cerr << "Variable " << name << " not found" << std::endl;
@@ -79,6 +85,17 @@ bool Agent::hasVariable(std::string name) const
   {
     return false;
   }
+}
+
+void Agent::updateRelationship(int other_agent_id, std::string name, Variable value)
+{
+  if (other_agent_id == id)
+    return;
+  else if (relationships.find(other_agent_id) == relationships.end())
+  {
+    relationships.emplace(other_agent_id, std::unordered_map<std::string, Variable>());
+  }
+  relationships.at(other_agent_id).emplace(name, value);
 }
 
 Variable &Agent::operator[](const std::string &name)

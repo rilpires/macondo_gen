@@ -1,0 +1,135 @@
+{
+  "version": "0.0",
+  "agents": [
+    {
+      "name": "poor_leftist",
+      "tags": [
+        "poor"
+      ],
+      "parameters": {
+        "leftness": 1.0,
+        "envyness": 0.5,
+        "wealth": 0.1,
+        "dresscode": 0.1,
+        "relieved": 0.5
+      }
+    },
+    {
+      "name": "poor_rightist",
+      "parameters": {
+        "leftness": 0.0,
+        "envyness": 0.5,
+        "wealth": 0.2,
+        "dresscode": 0.9,
+        "relieved": 0.5
+      }
+    },
+    {
+      "name": "rich_leftist",
+      "parameters": {
+        "leftness": 1.0,
+        "envyness": 0.5,
+        "wealth": 0.9,
+        "dresscode": 0.1,
+        "relieved": 0.5
+      }
+    },
+    {
+      "name": "rich_rightist",
+      "parameters": {
+        "leftness": 0.0,
+        "envyness": 0.5,
+        "wealth": 1.0,
+        "dresscode": 1.0,
+        "relieved": 0.5
+      }
+    }
+  ],
+  "expressions": [
+    {
+      "name": "rebel",
+      "expression": "leftness*(1.0-wealth)"
+    }
+  ],
+  "relations": [
+    {
+      "name": "friendship",
+      "default": 0.5
+    },
+    {
+      "name": "respect",
+      "default": 0.1
+    }
+  ],
+  "event_templates": [
+    {
+      "name": "hateful_speech",
+      "type": "relation",
+      "reason": "wealth envyness",
+      "expression": "envyness * (other.wealth - wealth)"
+    },
+    {
+      "name": "hateful_speech",
+      "type": "relation",
+      "reason": "dresscode envyness",
+      "expression": "envyness * (other.dresscode - dresscode)"
+    },
+    {
+      "name": "hateful_speech",
+      "type": "relation",
+      "reason": "enemy",
+      "expression": "(1-leftness) * (1-friendship)"
+    },
+    {
+      "name": "hateful_speech",
+      "type": "relation",
+      "reason": "rebel",
+      "expression": "(other.rebel - self.rebel) * (1 - leftness)"
+    },
+    {
+      "name": "pitiful_speech",
+      "type": "relation",
+      "reason": "wealth",
+      "expression": "(self.wealth - other.wealth)"
+    },
+    {
+      "name": "pitiful_speech",
+      "type": "relation",
+      "reason": "dresscode",
+      "expression": "(self.dresscode - other.dresscode)"
+    },
+    {
+      "name": "flipped",
+      "type": "self",
+      "expression": "(1.0 - self.wealth)"
+    },
+    {
+      "name": "friendly_speech",
+      "type": "relation",
+      "expression": "1 - abs(other.leftness - leftness)"
+    }
+  ],
+  "triggers": {
+    "hateful_speech": {
+      "on_self": {
+        "relieved": "0.1"
+      },
+      "on_other": {
+        "friendship": "-friendship * 0.1"
+      }
+    },
+    "friendly_speech": {
+      "on_self": {
+        "relieved": "0.02"
+      },
+      "on_other": {
+        "friendship": "friendship * 0.1"
+      }
+    },
+    "flipped": {
+      "on_self": {
+        "relieved": "0.05"
+      }
+    }
+  }
+}

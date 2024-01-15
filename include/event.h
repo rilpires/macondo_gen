@@ -34,8 +34,7 @@ struct Event
   const EventTemplate &_template;
   const int agent_id = -1;
   const int other_agent_id = -1;
-
-  Event(int id, double time, int agent_id, const EventTemplate &_template);
+  const double likelihood;
 
   Agent &getAgent();
   Agent &getOtherAgent();

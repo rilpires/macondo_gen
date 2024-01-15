@@ -3,6 +3,7 @@
 #include "agent.h"
 #include "event.h"
 #include "expression.h"
+#include "random.h"
 
 Story::Story()
 {
@@ -38,9 +39,85 @@ void Story::buildFromJSON(json &story_json)
       event_template.story = this;
       event_templates.emplace(event_template.id, event_template);
     }
+
+    // Building relation defaults
+    for (auto &relation_json : story_json["relations"])
+    {
+      if (!relation_json.contains("name") || !relation_json["name"].is_string())
+        continue;
+      if (!relation_json.contains("default") || !relation_json["default"].is_number())
+        continue;
+      relation_default.emplace(relation_json["name"].get<std::string>(), relation_json["default"].get<double>());
+    }
+
+    // Filling defaults
+    for (auto &agent : agents)
+      for (auto &agent2 : agents)
+      {
+        for (auto &relation : relation_default)
+        {
+          agent.second.updateRelationship(agent2.second.id, relation.first, relation.second);
+        }
+      }
+
+    std::cout << "Story built" << std::endl;
   }
   catch (const std::exception &e)
   {
     std::cerr << e.what() << '\n';
+  }
+}
+
+void Story::proceed(double time)
+{
+  // std::cout << "Proceeding to time " << time << std::endl;
+  for (auto &event_template : event_templates)
+  {
+    if (event_template.second.type == EVENT_TYPE_SELF)
+    {
+      for (auto &agent : agents)
+      {
+        double d = event_template.second.expression.evaluate(agent.second, agent.second).toDouble();
+        if (d > 0 && Random::exponentialSamples(d, time) >= 1.0)
+        {
+          Event event({
+              open_event_id++,
+              time,
+              event_template.second,
+              agent.second.id,
+              -1,
+              d,
+          });
+          events.emplace(event.id, event);
+          std::cout << event.buildExplanation() << std::endl;
+        }
+      }
+    }
+    else if (event_template.second.type == EVENT_TYPE_RELATION)
+    {
+      for (auto &agent : agents)
+      {
+        for (auto &other_agent : agents)
+        {
+          if (agent.second.id == other_agent.second.id)
+            continue;
+          agent.second.other_agent_id = other_agent.second.id;
+          double d = event_template.second.expression.evaluate(agent.second, other_agent.second).toDouble();
+          if (d > 0 && Random::exponentialSamples(d, time) >= 1.0)
+          {
+            Event event({
+                open_event_id++,
+                time,
+                event_template.second,
+                agent.second.id,
+                other_agent.second.id,
+                d,
+            });
+            events.emplace(event.id, event);
+            std::cout << event.buildExplanation() << std::endl;
+          }
+        }
+      }
+    }
   }
 }
