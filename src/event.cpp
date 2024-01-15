@@ -32,13 +32,13 @@ EventTemplate::EventTemplate(int id, json &event_template_json) : id(id)
 
 std::string Event::buildExplanation()
 {
-  return Utils::replaceAll("Event <EVENT> was triggered by agent <AGENT><OTHER_AGENT><REASON><ODDS>",
+  return Utils::replaceAll("Event <EVENT> was triggered by agent <AGENT><OTHER_AGENT><REASON><RATE>",
                            StringMap({
                                {"<EVENT>", _template.pretty_name},
-                               {"<AGENT>", getAgent().name},
-                               {"<OTHER_AGENT>", (other_agent_id == -1) ? "" : (" towards " + getOtherAgent().name)},
+                               {"<AGENT>", getAgent().getName()},
+                               {"<OTHER_AGENT>", (other_agent_id == -1) ? "" : (" towards " + getOtherAgent().getName())},
                                {"<REASON>", (_template.reason.size() == 0) ? "" : (" due to " + _template.reason)},
-                               {"<ODDS>", " (odds " + std::to_string(likelihood) + ")"},
+                               {"<RATE>", " (rate " + std::to_string(rate) + ")"},
                            }));
 }
 

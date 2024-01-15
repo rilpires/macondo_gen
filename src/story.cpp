@@ -68,9 +68,8 @@ void Story::buildFromJSON(json &story_json)
   }
 }
 
-void Story::proceed(double time)
+void Story::proceed(double duration)
 {
-  // std::cout << "Proceeding to time " << time << std::endl;
   for (auto &event_template : event_templates)
   {
     if (event_template.second.type == EVENT_TYPE_SELF)
@@ -78,18 +77,17 @@ void Story::proceed(double time)
       for (auto &agent : agents)
       {
         double d = event_template.second.expression.evaluate(agent.second, agent.second).toDouble();
-        if (d > 0 && Random::exponentialSamples(d, time) >= 1.0)
+        if (d > 0 && Random::exponentialSamples(d, duration) >= 1.0)
         {
           Event event({
               open_event_id++,
-              time,
+              current_time,
               event_template.second,
               agent.second.id,
               -1,
               d,
           });
-          events.emplace(event.id, event);
-          std::cout << event.buildExplanation() << std::endl;
+          events.push_back(event);
         }
       }
     }
@@ -103,21 +101,21 @@ void Story::proceed(double time)
             continue;
           agent.second.other_agent_id = other_agent.second.id;
           double d = event_template.second.expression.evaluate(agent.second, other_agent.second).toDouble();
-          if (d > 0 && Random::exponentialSamples(d, time) >= 1.0)
+          if (d > 0 && Random::exponentialSamples(d, duration) >= 1.0)
           {
             Event event({
                 open_event_id++,
-                time,
+                current_time,
                 event_template.second,
                 agent.second.id,
                 other_agent.second.id,
                 d,
             });
-            events.emplace(event.id, event);
-            std::cout << event.buildExplanation() << std::endl;
+            events.push_back(event);
           }
         }
       }
     }
   }
+  current_time += duration;
 }

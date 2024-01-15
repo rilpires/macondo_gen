@@ -19,12 +19,12 @@ bool Agent::buildFromJSON(json &agent_json)
 {
   try
   {
-    name = agent_json["name"];
-
-    if (agent_json.contains("tags") && agent_json["tags"].is_array())
-      for (auto &tag : agent_json["tags"])
-        if (tag.is_string())
-          tags.insert(tag.get<std::string>());
+    if (agent_json.contains("labels") && agent_json["labels"].is_object())
+      for (auto &label : agent_json["labels"].items())
+        if (label.value().is_string())
+          labels.emplace(label.key(), label.value().get<std::string>());
+        else
+          std::cerr << "Label " << label.key() << " of agent " << id << " is not a string" << std::endl;
 
     if (agent_json.contains("parameters") && agent_json["parameters"].is_object())
       for (auto &parameter : agent_json["parameters"].items())
@@ -96,6 +96,14 @@ void Agent::updateRelationship(int other_agent_id, std::string name, Variable va
     relationships.emplace(other_agent_id, std::unordered_map<std::string, Variable>());
   }
   relationships.at(other_agent_id).emplace(name, value);
+}
+
+std::string Agent::getName() const
+{
+  if (labels.find("name") != labels.end())
+    return labels.at("name");
+  else
+    return "Agent_" + std::to_string(id);
 }
 
 Variable &Agent::operator[](const std::string &name)

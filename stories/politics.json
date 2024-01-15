@@ -2,10 +2,9 @@
   "version": "0.0",
   "agents": [
     {
-      "name": "poor_leftist",
-      "tags": [
-        "poor"
-      ],
+      "labels": {
+        "name": "poor_leftist"
+      },
       "parameters": {
         "leftness": 1.0,
         "envyness": 0.5,
@@ -15,7 +14,9 @@
       }
     },
     {
-      "name": "poor_rightist",
+      "labels": {
+        "name": "poor_rightist"
+      },
       "parameters": {
         "leftness": 0.0,
         "envyness": 0.5,
@@ -25,7 +26,9 @@
       }
     },
     {
-      "name": "rich_leftist",
+      "labels": {
+        "name": "rich_leftist"
+      },
       "parameters": {
         "leftness": 1.0,
         "envyness": 0.5,
@@ -35,7 +38,9 @@
       }
     },
     {
-      "name": "rich_rightist",
+      "labels": {
+        "name": "rich_rightist"
+      },
       "parameters": {
         "leftness": 0.0,
         "envyness": 0.5,

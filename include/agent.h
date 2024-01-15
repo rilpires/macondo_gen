@@ -12,8 +12,7 @@ struct Agent
 
   const int id;
   const int current_time;
-  std::string name;
-  std::set<std::string> tags;
+  std::unordered_map<std::string, std::string> labels;
   std::unordered_map<std::string, Variable> parameters;
   std::unordered_map<int, std::unordered_map<std::string, Variable>> relationships;
 
@@ -24,6 +23,7 @@ struct Agent
   Agent(int id = -1, int current_time = 0);
   ~Agent();
 
+  std::string getName() const;
   bool buildFromJSON(json &agent_json);
 
   bool hasVariable(std::string name) const;

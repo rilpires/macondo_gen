@@ -33,6 +33,19 @@ std::string Utils::replaceAll(const std::string &context, const StringMap &repla
   return ret;
 }
 
+std::string Utils::toLower(std::string str)
+{
+  for (int i = 0; i < str.size(); i++)
+    str[i] = tolower(str[i]);
+  return str;
+}
+std::string Utils::toUpper(std::string str)
+{
+  for (int i = 0; i < str.size(); i++)
+    str[i] = toupper(str[i]);
+  return str;
+}
+
 json Utils::loadJSON(std::string filename)
 {
   try
