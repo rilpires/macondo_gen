@@ -50,7 +50,7 @@
       }
     }
   ],
-  "expressions": [
+  "parameter_aliases": [
     {
       "name": "rebel",
       "expression": "leftness*(1.0-wealth)"

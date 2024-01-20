@@ -1,182 +1,122 @@
 
-#include "utils.h"
-#include "agent.h"
-#include "expression.h"
-#include "story.h"
-#include "variable.h"
+#include "api.h"
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <csignal>
 
-int main()
+int server_fd;
+
+int main(int argc, char **argv)
 {
 
-  Story story;
-  std::cout << "Macondogen v0.0" << std::endl;
-  std::cout << "Type HELP for a list of commands" << std::endl;
+  bool is_tcp = false;
+  int port = 7776;
 
-  while (true)
+  for (int i = 1; i < argc; i++)
   {
-    std::string line;
-    std::string command;
-    std::getline(std::cin, line);
-    std::vector<std::string> tokens = Utils::split(line, " ");
-    if (tokens.size() == 0)
-      continue;
-    command = tokens[0];
-    command = Utils::toUpper(command);
-    if (command == "EXIT" || command == "QUIT")
-      break;
-    else if (command == "PRINT")
+    std::string arg = std::string(argv[i]);
+    if ((arg == "--tcp") || (arg == "-t"))
     {
+      is_tcp = true;
     }
-    else if (command == "JSON")
+    // Arguments with parameters
+    else if (i + 1 < argc)
     {
-      std::string filename;
-      if (tokens.size() > 1)
+      if ((arg == "--port") || (arg == "-p"))
       {
-        filename = tokens[1];
-      }
-      else
-      {
-        filename = "stories/politics.json";
-      }
-      story = Story();
-      json j = Utils::loadJSON(filename);
-      story.buildFromJSON(j);
-    }
-    else if (command == "PROCEED")
-    {
-      if (tokens.size() > 1)
-      {
-        double time = std::stod(tokens[1]);
-        story.proceed(time);
-      }
-      else
-      {
-        std::cout << "Missing argument" << std::endl;
-      }
-    }
-    else if (command == "LIST")
-    {
-      if (tokens.size() > 1)
-      {
-        std::string type = tokens[1];
-        type = Utils::toUpper(type);
-        if (type == "AGENTS")
+        port = std::stoi(argv[i + 1]);
+        if (port < 0)
         {
-          for (auto &agent : story.agents)
-            std::cout << agent.second.id << " | " << agent.second.getName() << std::endl;
+          port = 7776;
         }
-        else if (type == "EVENTS")
-        {
-          for (auto &event : story.events)
-            std::cout << event.time << " | " << event._template.id << std::endl;
-        }
-        else if (type == "EVENT_TEMPLATES")
-        {
-          for (auto &_template : story.event_templates)
-            std::cout << _template.second.id << " | " << _template.second.pretty_name << std::endl;
-        }
-        else
-        {
-          std::cout << "Unknown objects to list" << std::endl;
-        }
-      }
-      else
-      {
-        std::cout << "Missing argument" << std::endl;
+        i++;
       }
     }
-    else if (command == "TIME")
+  }
+
+  std::cout << "Macondogen v0.0" << std::endl;
+
+  // hardcoding a story while we don't have a proper command line interface
+  auto api = API();
+  auto input_json = Utils::loadJSON("stories/politics.json");
+  api.JSON(input_json.dump());
+
+  if (is_tcp)
+  {
+    std::cout << "Starting TCP server on port " << port << std::endl;
+    const u_int32_t buf_size = 1024 * 1024; // 1MB
+    char buffer[buf_size];
+
+    // Adress struct
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+    int addrlen = sizeof(address);
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd <= 0)
     {
-      std::cout << story.current_time << std::endl;
+      std::cerr << "socket failed" << std::endl;
+      exit(EXIT_FAILURE);
     }
-    else if (command == "POP")
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
     {
-      int how_many = 0;
-      if (tokens.size() > 1)
+      std::cerr << "bind failed" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    if (listen(server_fd, 3) < 0)
+    {
+      std::cerr << "listen failed" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    auto exitLambda = [](int signum)
+    { std::cout << "Exiting..." << std::endl; 
+                  close(server_fd); };
+    std::signal(SIGTERM, exitLambda);
+    std::signal(SIGINT, exitLambda);
+    std::signal(SIGQUIT, exitLambda);
+    std::signal(SIGKILL, exitLambda);
+    std::cout << "Successfully started TCP server" << std::endl;
+    while (true)
+    {
+      int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+      if (new_socket < 0)
       {
-        if (Utils::toUpper(tokens[1]) == "ALL")
-          how_many = story.events.size();
-        else
+        std::cerr << "accept failed" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      std::cout << "New connection from " << inet_ntoa(address.sin_addr) << ":" << ntohs(address.sin_port) << std::endl;
+      while (true)
+      {
+        int bytes_read = read(new_socket, buffer, buf_size);
+        if (bytes_read <= 0)
         {
-          try
-          {
-            how_many = std::stoi(tokens[1]);
-          }
-          catch (const std::exception &e)
-          {
-            how_many = 0;
-          }
+          std::cout << "Connection closed" << std::endl;
+          break;
         }
-      }
-      else
-        how_many = 1;
-      for (
-          int i = 0;
-          (i < how_many) && (story.events.size() > 0);
-          i++)
-      {
-        Event event = story.events.front();
-        story.events.pop_front();
-        std::cout << event.buildExplanation() << std::endl;
-      }
-      std::cout << "Events left: " << story.events.size() << std::endl;
-    }
-    else if (command == "UPDATE")
-    {
-      if (tokens.size() == 6 && Utils::toUpper(tokens[1]) == "AGENT" && Utils::toUpper(tokens[2]) == "PARAM")
-      {
-        int agent_id = std::stoi(tokens[3]);
-        std::string parameter_name = tokens[4];
-        Variable value = Variable(std::stod(tokens[5]));
-        Agent &agent = story.agents[agent_id];
-        agent.parameters.emplace(parameter_name, value);
-      }
-      else if (tokens.size() == 6 && Utils::toUpper(tokens[1]) == "AGENT" && Utils::toUpper(tokens[2]) == "LABEL")
-      {
-        int agent_id = std::stoi(tokens[3]);
-        std::string label_key = tokens[4];
-        std::string label_value = tokens[5];
-        Agent &agent = story.agents[agent_id];
-        agent.labels.emplace(label_key, label_value);
-      }
-      else if (tokens.size() == 5 && Utils::toUpper(tokens[1]) == "EVENT_TEMPLATE" && Utils::toUpper(tokens[2]) == "EXPRESSION")
-      {
-        int event_template_id = std::stoi(tokens[3]);
-        std::string value = tokens[4];
-        if (story.event_templates.find(event_template_id) == story.event_templates.end())
-        {
-          std::cout << "Event template not found" << std::endl;
-          continue;
-        }
-        EventTemplate &_template = story.event_templates.at(event_template_id);
-        _template.expression = Expression(value);
-      }
-      else
-      {
-        std::cout << "Usage:" << std::endl;
-        std::cout << "  UPDATE AGENT PARAM <agent_id> <parameter_name> <value>" << std::endl;
-        std::cout << "  UPDATE AGENT LABEL <agent_id> <label_key> <label_value>" << std::endl;
-        std::cout << "  UPDATE EVENT_TEMPLATE EXPRESSION <event_template_id> <value>" << std::endl;
+        std::string line(buffer, bytes_read);
+        line = line.substr(0, line.find_first_of('\n'));
+        std::string response = api.command(line);
+        write(new_socket, response.c_str(), response.size());
       }
     }
-    else if (command == "HELP" || command == "H")
+  }
+  else
+  {
+    bool quit = false;
+    api.onExit([&quit]()
+               { quit = true; });
+    api.onOutput([](std::string s)
+                 { std::cout << s << std::endl; });
+
+    std::cout << "Type HELP for a list of commands" << std::endl;
+    while (!quit)
     {
-      std::cout << "Available commands:" << std::endl;
-      std::cout << "  JSON <filename>" << std::endl;
-      std::cout << "  PROCEED <time>" << std::endl;
-      std::cout << "  LIST AGENTS" << std::endl;
-      std::cout << "  LIST EVENTS" << std::endl;
-      std::cout << "  LIST EVENT_TEMPLATES" << std::endl;
-      std::cout << "  TIME" << std::endl;
-      std::cout << "  POP <number>" << std::endl;
-      std::cout << "  UPDATE AGENT PARAM <agent_id> <parameter_name> <value>" << std::endl;
-      std::cout << "  UPDATE AGENT LABEL <agent_id> <label_key> <label_value>" << std::endl;
-      std::cout << "  UPDATE EVENT_TEMPLATE EXPRESSION <event_template_id> <value>" << std::endl;
-      std::cout << "  EXIT" << std::endl;
-    }
-    else
-    {
-      std::cout << "Unknown command" << std::endl;
+      std::string line;
+      std::cout << "> ";
+      std::getline(std::cin, line);
+      api << line;
     }
   }
 

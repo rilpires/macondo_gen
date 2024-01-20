@@ -5,7 +5,7 @@
 
 Agent Agent::invalid_agent;
 
-Agent::Agent(int id, int current_time) : id(id), current_time(current_time)
+Agent::Agent(int id) : id(id)
 {
   // std::cout << "Agent " << id << " created" << std::endl;
 }
@@ -55,9 +55,9 @@ Variable Agent::getVariable(std::string name) const
   {
     return parameters.find(name)->second;
   }
-  else if ((story != nullptr) && (story->expressions.size() > 0) && (story->expressions.find(name) != story->expressions.end()))
+  else if ((story != nullptr) && (story->parameter_aliases.size() > 0) && (story->parameter_aliases.find(name) != story->parameter_aliases.end()))
   {
-    const Expression &e = (story->expressions.find(name)->second);
+    const Expression &e = (story->parameter_aliases.find(name)->second);
     return e.evaluate(*this, *this);
   }
   else if (other_agent_id != -1 &&
@@ -77,7 +77,7 @@ bool Agent::hasVariable(std::string name) const
 {
   if (parameters.find(name) != parameters.end())
     return true;
-  else if ((story != nullptr) && (story->expressions.find(name) != story->expressions.end()))
+  else if ((story != nullptr) && (story->parameter_aliases.find(name) != story->parameter_aliases.end()))
   {
     return true;
   }

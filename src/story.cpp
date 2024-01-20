@@ -22,14 +22,14 @@ void Story::buildFromJSON(json &story_json)
       agents.emplace(agent.id, agent);
     }
 
-    // Build expressions
-    for (auto &expression_json : story_json["expressions"])
+    // Build parameter_aliases
+    for (auto &param_aliases_json : story_json["parameter_aliases"])
     {
-      if (!expression_json.contains("name") || !expression_json["name"].is_string())
+      if (!param_aliases_json.contains("name") || !param_aliases_json["name"].is_string())
         continue;
-      if (!expression_json.contains("expression") || !expression_json["expression"].is_string())
+      if (!param_aliases_json.contains("expression") || !param_aliases_json["expression"].is_string())
         continue;
-      expressions.emplace(expression_json["name"].get<std::string>(), Expression(expression_json["expression"].get<std::string>()));
+      parameter_aliases.emplace(param_aliases_json["name"].get<std::string>(), Expression(param_aliases_json["expression"].get<std::string>()));
     }
 
     // Build event templates
@@ -77,17 +77,20 @@ void Story::proceed(double duration)
       for (auto &agent : agents)
       {
         double d = event_template.second.expression.evaluate(agent.second, agent.second).toDouble();
-        if (d > 0 && Random::exponentialSamples(d, duration) >= 1.0)
+        if (d > 0)
         {
-          Event event({
-              open_event_id++,
-              current_time,
-              event_template.second,
-              agent.second.id,
-              -1,
-              d,
-          });
-          events.push_back(event);
+          int amount = Random::exponentialSamples(d, duration);
+          for (int i = 0; i < amount; i++)
+          {
+            Event event({
+                Random::randomDouble(current_time, current_time + duration),
+                event_template.second,
+                agent.second.id,
+                -1,
+                d,
+            });
+            events.push_back(event);
+          }
         }
       }
     }
@@ -101,21 +104,38 @@ void Story::proceed(double duration)
             continue;
           agent.second.other_agent_id = other_agent.second.id;
           double d = event_template.second.expression.evaluate(agent.second, other_agent.second).toDouble();
-          if (d > 0 && Random::exponentialSamples(d, duration) >= 1.0)
+          if (d > 0)
           {
-            Event event({
-                open_event_id++,
-                current_time,
-                event_template.second,
-                agent.second.id,
-                other_agent.second.id,
-                d,
-            });
-            events.push_back(event);
+            int amount = Random::exponentialSamples(d, duration);
+            for (int i = 0; i < amount; i++)
+            {
+              Event event({
+                  Random::randomDouble(current_time, current_time + duration),
+                  event_template.second,
+                  agent.second.id,
+                  other_agent.second.id,
+                  d,
+              });
+              events.push_back(event);
+            }
           }
         }
       }
     }
   }
+  events.sort([](const Event &a, const Event &b)
+              { return a.time < b.time; });
   current_time += duration;
+}
+
+void Story::clear()
+{
+  open_agent_id = 0;
+  open_event_template_id = 0;
+  current_time = 0;
+  relation_default.clear();
+  event_templates.clear();
+  parameter_aliases.clear();
+  agents.clear();
+  events.clear();
 }

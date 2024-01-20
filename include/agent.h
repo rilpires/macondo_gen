@@ -11,7 +11,7 @@ struct Agent
   Story *story = nullptr;
 
   const int id;
-  const int current_time;
+  double current_time = 0;
   std::unordered_map<std::string, std::string> labels;
   std::unordered_map<std::string, Variable> parameters;
   std::unordered_map<int, std::unordered_map<std::string, Variable>> relationships;
@@ -20,7 +20,7 @@ struct Agent
 
   static Agent invalid_agent;
 
-  Agent(int id = -1, int current_time = 0);
+  Agent(int id = -1);
   ~Agent();
 
   std::string getName() const;

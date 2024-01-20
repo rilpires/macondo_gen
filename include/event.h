@@ -29,7 +29,6 @@ struct EventTemplate
 
 struct Event
 {
-  const int id;
   const double time;
   const EventTemplate &_template;
   const int agent_id = -1;
