@@ -32,6 +32,13 @@ bool Agent::buildFromJSON(json &agent_json)
           parameters.emplace(parameter.key(), Variable(parameter.value().get<double>()));
         else
           std::cerr << "Variable " << parameter.key() << " of agent " << id << " is not a number" << std::endl;
+
+    if (agent_json.contains("tags") && agent_json["tags"].is_array())
+      for (auto &tag : agent_json["tags"])
+        if (tag.is_string())
+          tags.insert(tag.get<std::string>());
+        else
+          std::cerr << "Tag of agent " << id << " is not a string" << std::endl;
   }
   catch (const std::exception &e)
   {
@@ -39,6 +46,13 @@ bool Agent::buildFromJSON(json &agent_json)
     return false;
   }
   return true;
+}
+
+void Agent::fillDefaultParameters(Agent &default_agent)
+{
+  for (auto &parameter : default_agent.parameters)
+    if (parameters.find(parameter.first) == parameters.end())
+      parameters.emplace(parameter.first, parameter.second);
 }
 
 Agent &Agent::updateVariable(std::string name, Variable value)
@@ -109,4 +123,14 @@ std::string Agent::getName() const
 Variable &Agent::operator[](const std::string &name)
 {
   return parameters[name];
+}
+
+void Agent::operator=(const Agent &other)
+{
+  current_time = other.current_time;
+  labels = other.labels;
+  tags = other.tags;
+  parameters = other.parameters;
+  relationships = other.relationships;
+  other_agent_id = other.other_agent_id;
 }

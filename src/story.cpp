@@ -13,12 +13,23 @@ void Story::buildFromJSON(json &story_json)
 {
   try
   {
+    // Build default agent
+    for (auto &agent_json : story_json["agents"])
+    {
+      if (agent_json.contains("default") && agent_json["default"].is_boolean() && agent_json["default"].get<bool>())
+      {
+        default_agent = Agent(-1);
+        default_agent.story = this;
+        default_agent.buildFromJSON(agent_json);
+      }
+    }
     // Build agents
     for (auto &agent_json : story_json["agents"])
     {
       Agent agent(open_agent_id++);
       agent.story = this;
       agent.buildFromJSON(agent_json);
+      agent.fillDefaultParameters(default_agent);
       agents.emplace(agent.id, agent);
     }
 
@@ -76,25 +87,23 @@ void Story::proceed(double duration)
     {
       for (auto &agent : agents)
       {
-        double d = event_template.second.expression.evaluate(agent.second, agent.second).toDouble();
-        if (d > 0)
+        double mean = event_template.second.expression.evaluate(agent.second, agent.second).toDouble();
+        double now = current_time + Random::exponential(mean);
+        while ((mean > 0) && (now < current_time + duration))
         {
-          int amount = Random::exponentialSamples(d, duration);
-          for (int i = 0; i < amount; i++)
-          {
-            Event event({
-                Random::randomDouble(current_time, current_time + duration),
-                event_template.second,
-                agent.second.id,
-                -1,
-                d,
-            });
-            events.push_back(event);
-          }
+          Event event({
+              now,
+              event_template.second,
+              agent.second.id,
+              -1,
+              mean,
+          });
+          events.push_back(event);
+          now += Random::exponential(mean);
         }
       }
     }
-    else if (event_template.second.type == EVENT_TYPE_RELATION)
+    else
     {
       for (auto &agent : agents)
       {
@@ -102,22 +111,23 @@ void Story::proceed(double duration)
         {
           if (agent.second.id == other_agent.second.id)
             continue;
+          if (event_template.second.type == EVENT_TYPE_UNIDIRECTIONAL)
+            if (agent.second.id > other_agent.second.id)
+              continue;
           agent.second.other_agent_id = other_agent.second.id;
-          double d = event_template.second.expression.evaluate(agent.second, other_agent.second).toDouble();
-          if (d > 0)
+          double mean = event_template.second.expression.evaluate(agent.second, other_agent.second).toDouble();
+          double now = current_time + Random::exponential(mean);
+          while ((mean > 0) && (now < current_time + duration))
           {
-            int amount = Random::exponentialSamples(d, duration);
-            for (int i = 0; i < amount; i++)
-            {
-              Event event({
-                  Random::randomDouble(current_time, current_time + duration),
-                  event_template.second,
-                  agent.second.id,
-                  other_agent.second.id,
-                  d,
-              });
-              events.push_back(event);
-            }
+            Event event({
+                now,
+                event_template.second,
+                agent.second.id,
+                other_agent.second.id,
+                mean,
+            });
+            events.push_back(event);
+            now += Random::exponential(mean);
           }
         }
       }

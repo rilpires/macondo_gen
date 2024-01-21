@@ -2,15 +2,29 @@
   "version": "0.0",
   "agents": [
     {
+      "default": true,
+      "parameters": {
+        "leftness": 0.5,
+        "envyness": 0.5,
+        "wealth": 0.5,
+        "dresscode": 0.5,
+        "relieved": 0.5
+      }
+    },
+    {
+      "parameters": {
+        "wealth": 1.5
+      }
+    },
+    {},
+    {},
+    {
       "labels": {
         "name": "poor_leftist"
       },
       "parameters": {
         "leftness": 1.0,
-        "envyness": 0.5,
-        "wealth": 0.1,
-        "dresscode": 0.1,
-        "relieved": 0.5
+        "wealth": 0.1
       }
     },
     {
@@ -19,10 +33,7 @@
       },
       "parameters": {
         "leftness": 0.0,
-        "envyness": 0.5,
-        "wealth": 0.2,
-        "dresscode": 0.9,
-        "relieved": 0.5
+        "wealth": 0.2
       }
     },
     {
@@ -31,10 +42,7 @@
       },
       "parameters": {
         "leftness": 1.0,
-        "envyness": 0.5,
-        "wealth": 0.9,
-        "dresscode": 0.1,
-        "relieved": 0.5
+        "wealth": 0.9
       }
     },
     {
@@ -43,10 +51,7 @@
       },
       "parameters": {
         "leftness": 0.0,
-        "envyness": 0.5,
-        "wealth": 1.0,
-        "dresscode": 1.0,
-        "relieved": 0.5
+        "wealth": 1.0
       }
     }
   ],

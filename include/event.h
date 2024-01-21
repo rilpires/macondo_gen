@@ -9,7 +9,8 @@
 enum EVENT_TYPE
 {
   EVENT_TYPE_SELF,
-  EVENT_TYPE_RELATION
+  EVENT_TYPE_UNIDIRECTIONAL,
+  EVENT_TYPE_BIDIRECTIONAL,
 };
 
 struct Story;
@@ -21,6 +22,8 @@ struct EventTemplate
   EVENT_TYPE type = EVENT_TYPE_SELF;
   std::string pretty_name;
   std::string reason;
+  std::unordered_map<std::string, std::string> labels;
+  std::set<std::string> tags;
   std::unordered_map<std::string, Variable> default_parameters;
   Expression expression;
 

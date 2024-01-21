@@ -13,16 +13,29 @@ EventTemplate::EventTemplate(int id, json &event_template_json) : id(id)
     if (event_template_json.contains("reason") && event_template_json["reason"].is_string())
       reason = event_template_json["reason"].get<std::string>();
     // type
+    this->type = EVENT_TYPE_SELF;
     if (event_template_json.contains("type") && event_template_json["type"].is_string())
     {
       std::string type = event_template_json["type"].get<std::string>();
       if (type == "self")
         this->type = EVENT_TYPE_SELF;
-      else if (type == "relation")
-        this->type = EVENT_TYPE_RELATION;
+      else if (type == "unidirectional")
+        this->type = EVENT_TYPE_UNIDIRECTIONAL;
+      else if (type == "bidirectional")
+        this->type = EVENT_TYPE_BIDIRECTIONAL;
     }
     // expression
     expression = Expression(event_template_json["expression"].get<std::string>());
+    // labels
+    if (event_template_json.contains("labels") && event_template_json["labels"].is_object())
+      for (auto &label : event_template_json["labels"].items())
+        if (label.value().is_string())
+          labels[label.key()] = label.value().get<std::string>();
+    // tags
+    if (event_template_json.contains("tags") && event_template_json["tags"].is_array())
+      for (auto &tag : event_template_json["tags"])
+        if (tag.is_string())
+          tags.insert(tag.get<std::string>());
   }
   catch (const std::exception &e)
   {
