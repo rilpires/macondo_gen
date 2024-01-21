@@ -10,143 +10,147 @@ API::API()
 std::string API::command(std::string command)
 {
   if (command.size() == 0)
-    return "";
+    return "\n";
+  std::string ret = "";
   std::vector<std::string> tokens;
   for (auto &str : Utils::split(command, " "))
     tokens.push_back(Utils::toUpper(str));
   if (tokens[0] == "HELP")
   {
-    return HELP();
+    ret = HELP();
   }
   else if (tokens[0] == "JSON")
   {
     if (tokens.size() > 1)
     {
-      return JSON(tokens[1]);
+      ret = JSON(tokens[1]);
     }
     else
     {
-      return "Missing argument";
+      ret = "Missing argument";
     }
   }
   else if (tokens[0] == "PROCEED")
   {
     if (tokens.size() > 1)
     {
-      return PROCEED(std::stod(tokens[1]));
+      ret = PROCEED(std::stod(tokens[1]));
     }
     else
     {
-      return "Missing argument";
+      ret = "Missing argument";
     }
   }
   else if (tokens[0] == "CLEAR")
   {
-    return CLEAR();
+    ret = CLEAR();
   }
   else if (tokens[0] == "POP_EVENT")
   {
     if (tokens.size() > 1)
     {
-      return POP_EVENT(std::stoi(tokens[1]));
+      ret = POP_EVENT(std::stoi(tokens[1]));
     }
     else
     {
-      return POP_EVENT();
+      ret = POP_EVENT();
     }
   }
   else if (tokens[0] == "LIST_AGENTS")
   {
-    return LIST_AGENTS();
+    ret = LIST_AGENTS();
   }
   else if (tokens[0] == "LIST_EVENTS")
   {
-    return LIST_EVENTS();
+    ret = LIST_EVENTS();
   }
   else if (tokens[0] == "LIST_EVENT_TEMPLATES")
   {
-    return LIST_EVENT_TEMPLATES();
+    ret = LIST_EVENT_TEMPLATES();
   }
   else if (tokens[0] == "LIST_PARAMETER_ALIASES")
   {
-    return LIST_PARAMETER_ALIASES();
+    ret = LIST_PARAMETER_ALIASES();
   }
   else if (tokens[0] == "LIST_PARAMETER_ALIASES")
   {
-    return LIST_PARAMETER_ALIASES();
+    ret = LIST_PARAMETER_ALIASES();
   }
   else if (tokens[0] == "UPDATE_AGENT_PARAMETER")
   {
     if (tokens.size() > 3)
     {
-      return UPDATE_AGENT_PARAMETER(std::stoi(tokens[1]), tokens[2], std::stod(tokens[3]));
+      ret = UPDATE_AGENT_PARAMETER(std::stoi(tokens[1]), tokens[2], std::stod(tokens[3]));
     }
     else
     {
-      return "Missing argument";
+      ret = "Missing argument";
     }
   }
   else if (tokens[0] == "DESCRIBE_AGENT")
   {
     if (tokens.size() > 1)
     {
-      return DESCRIBE_AGENT(std::stoi(tokens[1]));
+      ret = DESCRIBE_AGENT(std::stoi(tokens[1]));
     }
     else
     {
-      return "Missing argument";
+      ret = "Missing argument";
     }
   }
   else if (tokens[0] == "DESCRIBE_EVENT_TEMPLATE")
   {
     if (tokens.size() > 1)
     {
-      return DESCRIBE_EVENT_TEMPLATE(std::stoi(tokens[1]));
+      ret = DESCRIBE_EVENT_TEMPLATE(std::stoi(tokens[1]));
     }
     else
     {
-      return "Missing argument";
+      ret = "Missing argument";
     }
   }
   else if (tokens[0] == "LIST_STORIES")
   {
-    return LIST_STORIES();
+    ret = LIST_STORIES();
   }
   else if (tokens[0] == "SELECT_STORY")
   {
     if (tokens.size() > 1)
     {
-      return SELECT_STORY(std::stoi(tokens[1]));
+      ret = SELECT_STORY(std::stoi(tokens[1]));
     }
     else
     {
-      return "Missing argument";
+      ret = "Missing argument";
     }
   }
   else if (tokens[0] == "NEW_STORY")
   {
-    return NEW_STORY();
+    ret = NEW_STORY();
   }
   else if (tokens[0] == "DEL_STORY")
   {
     if (tokens.size() > 1)
     {
-      return DEL_STORY(std::stoi(tokens[1]));
+      ret = DEL_STORY(std::stoi(tokens[1]));
     }
     else
     {
-      return "Missing argument";
+      ret = "Missing argument";
     }
   }
   else if (tokens[0] == "EXIT")
   {
     on_exit();
-    return "EXIT";
+    ret = "EXIT";
   }
   else
   {
-    return "Unknown command";
+    ret = "Unknown command";
   }
+  if (ret.size() == 0)
+    ret = "\n";
+  return ret;
 }
 std::string API::HELP()
 {
@@ -181,7 +185,7 @@ std::string API::JSON(std::string json_string)
 }
 std::string API::LIST_STORIES()
 {
-  std::string ret = "";
+  std::string ret = "\n";
   for (auto &story : stories)
   {
     ret += std::to_string(story.first) + "\n";
@@ -238,7 +242,7 @@ std::string API::POP_EVENT(int amount)
   Story &story = getCurrentStory();
   amount = std::max(amount, 0);
   amount = std::min(amount, (int)story.events.size());
-  std::string ret = "";
+  std::string ret = "\n";
   for (int i = 0; i < amount; i++)
   {
     Event &e = story.events.front();
@@ -256,7 +260,7 @@ std::string API::POP_EVENT(int amount)
 std::string API::LIST_AGENTS()
 {
   Story &story = getCurrentStory();
-  std::string ret = "";
+  std::string ret = "\n";
   for (auto &agent : story.agents)
   {
     ret += std::to_string(agent.first) + "\n";
@@ -296,7 +300,7 @@ std::string API::UPDATE_AGENT_PARAMETER(int agent_id, std::string parameter, dou
 std::string API::DESCRIBE_AGENT(int agent_id)
 {
   Story &story = getCurrentStory();
-  std::string ret = "";
+  std::string ret = "\n";
   if (story.agents.find(agent_id) == story.agents.end())
     return "Agent not found";
   else
@@ -326,7 +330,7 @@ std::string API::DESCRIBE_EVENT_TEMPLATE(int event_template_id)
   else
   {
     EventTemplate &event_template = story.event_templates.at(event_template_id);
-    std::string ret = "";
+    std::string ret = "\n";
     ret += "EVENT_TEMPLATE " + std::to_string(event_template.id) + "\n";
     ret += "NAME " + event_template.pretty_name + "\n";
     ret += "REASON " + event_template.reason + "\n";
@@ -339,10 +343,7 @@ std::string API::DESCRIBE_EVENT_TEMPLATE(int event_template_id)
 API &API::operator<<(std::string line)
 {
   std::string output = command(line);
-  if (output != "")
-  {
-    on_output(output);
-  }
+  on_output(output);
   return *this;
 }
 Story &API::getCurrentStory()
