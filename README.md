@@ -71,7 +71,7 @@ So, a tipical result for the "POP_EVENT 3" (pop up to 2 next events, if availabl
 
 It means that in time 0.004, the agent with ID 1 generated a self event from the event template with ID=1. In time 0.155, the agent with ID 2 generated a relation event from the event template with ID 10 towards the agent with ID 11.
 
-### How to use
+# How to use
 The engine is a REPL. More documentation will be added in the future, but for now, you can try the `HELP` command to see the available commands.
 
 It can be started as a TCP server, if the program is initialized with the argument `--tcp` or `-t`.<br>
@@ -140,7 +140,7 @@ Look at the "stories/" folder for more examples.
 
 ## TODO
 - There is some basic commands that are not implemented yet (like creating agents runtime)
-- Add more documentation on commands
+- Add more documentation on commands and features
 - Add more mathematical operators and functions
 - Add more examples
 - Add more tests

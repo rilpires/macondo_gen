@@ -71,8 +71,11 @@ int main(int argc, char **argv)
       exit(EXIT_FAILURE);
     }
     auto exitLambda = [](int signum)
-    { std::cout << "Exiting..." << std::endl; 
-                  close(server_fd); };
+    {
+      std::cout << "Exiting..." << std::endl;
+      close(server_fd);
+      exit(signum);
+    };
     std::signal(SIGTERM, exitLambda);
     std::signal(SIGINT, exitLambda);
     std::signal(SIGQUIT, exitLambda);
