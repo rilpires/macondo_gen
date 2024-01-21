@@ -1,0 +1,32 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Getting version
+        id: get_version
+        run: |
+          export VERSION=$(sed -n 's/.*"current_version": "\(.*\)"/\1/p' RELEASON_NOTES.json)
+          echo "Version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          
+      - name: Compiling with make
+        run: |
+          mkdir -p bin
+          make CUSTOM_CXXFLAGS=-O3
+
+      - name: Release assets
+        uses: ncipollo/release-action@v1
+        tag: ${{ env.VERSION }}
+        with:
+          artifacts: "bin/macondogen"
