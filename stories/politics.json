@@ -12,13 +12,6 @@
       }
     },
     {
-      "parameters": {
-        "wealth": 1.5
-      }
-    },
-    {},
-    {},
-    {
       "labels": {
         "name": "poor_leftist"
       },
@@ -59,6 +52,10 @@
     {
       "name": "rebel",
       "expression": "leftness*(1.0-wealth)"
+    },
+    {
+      "name": "rightness",
+      "expression": "1.0-leftness"
     }
   ],
   "relations": [
@@ -74,72 +71,108 @@
   "event_templates": [
     {
       "name": "hateful_speech",
-      "type": "relation",
-      "reason": "wealth envyness",
+      "tags": [
+        "hate",
+        "relief"
+      ],
+      "type": "unidirectional",
       "expression": "envyness * (other.wealth - wealth)"
     },
     {
       "name": "hateful_speech",
-      "type": "relation",
-      "reason": "dresscode envyness",
+      "tags": [
+        "hate",
+        "relief"
+      ],
+      "type": "unidirectional",
       "expression": "envyness * (other.dresscode - dresscode)"
     },
     {
       "name": "hateful_speech",
-      "type": "relation",
-      "reason": "enemy",
+      "tags": [
+        "hate",
+        "relief"
+      ],
+      "type": "unidirectional",
       "expression": "(1-leftness) * (1-friendship)"
     },
     {
       "name": "hateful_speech",
-      "type": "relation",
-      "reason": "rebel",
+      "tags": [
+        "hate",
+        "relief"
+      ],
+      "type": "unidirectional",
       "expression": "(other.rebel - self.rebel) * (1 - leftness)"
     },
     {
       "name": "pitiful_speech",
-      "type": "relation",
-      "reason": "wealth",
+      "tags": [
+        "relief"
+      ],
+      "type": "unidirectional",
       "expression": "(self.wealth - other.wealth)"
     },
     {
       "name": "pitiful_speech",
-      "type": "relation",
-      "reason": "dresscode",
+      "type": "unidirectional",
       "expression": "(self.dresscode - other.dresscode)"
     },
     {
       "name": "flipped",
+      "tags": [
+        "relief"
+      ],
       "type": "self",
       "expression": "(1.0 - self.wealth)"
     },
     {
       "name": "friendly_speech",
-      "type": "relation",
+      "tags": [
+        "relief",
+        "friendness"
+      ],
+      "type": "unidirectional",
       "expression": "1 - abs(other.leftness - leftness)"
     }
   ],
-  "triggers": {
-    "hateful_speech": {
+  "triggers": [
+    {
+      "filter": {
+        "event_tags_any": [
+          "hate"
+        ]
+      },
       "on_self": {
-        "relieved": "0.1"
+        "relieved": "relieved + 0.5"
       },
       "on_other": {
-        "friendship": "-friendship * 0.1"
+        "friendship": "friendship * 0.5"
       }
     },
-    "friendly_speech": {
+    {
+      "filter": {
+        "event_tags_any": [
+          "friendness"
+        ]
+      },
       "on_self": {
-        "relieved": "0.02"
+        "relieved": "relieved + 0.02",
+        "friendship": "friendship + 0.02"
       },
       "on_other": {
-        "friendship": "friendship * 0.1"
+        "friendship": "friendship + 0.1"
       }
     },
-    "flipped": {
+    {
+      "filter": {
+        "event_tags_any": [
+          "relief"
+        ]
+      },
       "on_self": {
-        "relieved": "0.05"
+        "relieved": "relieved + 0.5"
       }
     }
-  }
+  ]
 }

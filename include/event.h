@@ -26,6 +26,7 @@ struct EventTemplate
   std::set<std::string> tags;
   std::unordered_map<std::string, Variable> default_parameters;
   Expression expression;
+  std::set<int> available_trigger_ids;
 
   EventTemplate(int id, json &event_template_json);
 };

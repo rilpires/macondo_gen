@@ -35,12 +35,18 @@ public:
   std::string PROCEED(double time);
   std::string CLEAR();
   std::string POP_EVENT(int amount = 1);
-  std::string LIST_AGENTS();
   std::string LIST_EVENTS();
   std::string LIST_EVENT_TEMPLATES();
   std::string LIST_PARAMETER_ALIASES();
+
+  /// Agents
+  std::string LIST_AGENTS();
   std::string UPDATE_AGENT_PARAMETER(int agent_id, std::string parameter, double value);
+  std::string UPDATE_AGENT_LABEL(int agent_id, std::string key, std::string value);
+  std::string ADD_AGENT_TAG(int agent_id, std::string tag);
+  std::string REMOVE_AGENT_TAG(int agent_id, std::string tag);
   std::string DESCRIBE_AGENT(int agent_id);
+
   std::string DESCRIBE_EVENT_TEMPLATE(int event_template_id);
   std::string EXIT();
 

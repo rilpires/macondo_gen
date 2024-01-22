@@ -3,7 +3,7 @@
 #include "expression.h"
 #include "variable.h"
 
-Agent Agent::invalid_agent;
+Agent Agent::invalid_agent(-2);
 
 Agent::Agent(int id) : id(id)
 {
@@ -133,4 +133,9 @@ void Agent::operator=(const Agent &other)
   parameters = other.parameters;
   relationships = other.relationships;
   other_agent_id = other.other_agent_id;
+}
+
+bool Agent::operator==(const Agent &other) const
+{
+  return id == other.id;
 }

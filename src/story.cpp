@@ -26,6 +26,8 @@ void Story::buildFromJSON(json &story_json)
     // Build agents
     for (auto &agent_json : story_json["agents"])
     {
+      if (agent_json.contains("default") && agent_json["default"].is_boolean() && agent_json["default"].get<bool>())
+        continue;
       Agent agent(open_agent_id++);
       agent.story = this;
       agent.buildFromJSON(agent_json);
@@ -61,8 +63,10 @@ void Story::buildFromJSON(json &story_json)
       relation_default.emplace(relation_json["name"].get<std::string>(), relation_json["default"].get<double>());
     }
 
-    // Filling defaults
+    // Filling relation defaults
     for (auto &agent : agents)
+    {
+
       for (auto &agent2 : agents)
       {
         for (auto &relation : relation_default)
@@ -70,6 +74,51 @@ void Story::buildFromJSON(json &story_json)
           agent.second.updateRelationship(agent2.second.id, relation.first, relation.second);
         }
       }
+    }
+
+    // Building triggers
+    for (auto &trigger_json : story_json["triggers"])
+    {
+      Trigger trigger(trigger_json);
+      trigger.id = open_trigger_id++;
+      triggers.emplace(trigger.id, trigger);
+    }
+
+    // Filtering triggers
+    for (auto &event_template_entry : event_templates)
+    {
+      for (auto &trigger_entry : triggers)
+      {
+        Trigger &trigger = trigger_entry.second;
+        EventTemplate &event_template = event_template_entry.second;
+        bool valid = false;
+        if (trigger.event_tags_any.size() > 0)
+        {
+          for (auto &tag : trigger.event_tags_any)
+          {
+            if (event_template.tags.find(tag) != event_template.tags.end())
+            {
+              valid = true;
+              break;
+            }
+          }
+        }
+        else if (trigger.event_tags_all.size() > 0)
+        {
+          valid = true;
+          for (auto &tag : trigger.event_tags_all)
+          {
+            if (event_template.tags.find(tag) == event_template.tags.end())
+            {
+              valid = false;
+              break;
+            }
+          }
+        }
+        if (valid)
+          event_template.available_trigger_ids.insert(trigger.id);
+      }
+    }
 
     std::cout << "Story built" << std::endl;
   }
@@ -135,17 +184,70 @@ void Story::proceed(double duration)
   }
   events.sort([](const Event &a, const Event &b)
               { return a.time < b.time; });
+  for (auto &event : events)
+  {
+    triggerEvent(event);
+  }
   current_time += duration;
+}
+
+void Story::triggerEvent(Event &event)
+{
+  for (auto available_entry : event._template.available_trigger_ids)
+  {
+    int trigger_id = available_entry;
+    if (triggers.find(trigger_id) == triggers.end())
+    {
+      int template_id = event._template.id;
+      EventTemplate &event_template = event_templates.at(template_id);
+      event_template.available_trigger_ids.erase(trigger_id);
+      continue;
+    }
+    Trigger &trigger = triggers.at(trigger_id);
+    Agent &agent1 = event.getAgent();
+    Agent &agent2 = event.getOtherAgent();
+
+    if (agent1 == Agent::invalid_agent)
+      continue;
+
+    for (const auto &trigger_param : trigger.on_self_expressions)
+    {
+      if (agent2 == Agent::invalid_agent)
+      {
+        Variable value = trigger_param.second.evaluate(agent1, agent1);
+        agent1.updateVariable(trigger_param.first, value);
+      }
+      else
+      {
+        Variable value = trigger_param.second.evaluate(agent1, agent2);
+        agent1.updateVariable(trigger_param.first, value);
+      }
+    }
+
+    if (agent2 == Agent::invalid_agent)
+      continue;
+
+    for (const auto &trigger_param : trigger.on_other_expressions)
+    {
+      Variable value = trigger_param.second.evaluate(agent2, agent1);
+      agent2.updateVariable(trigger_param.first, value);
+    }
+  }
 }
 
 void Story::clear()
 {
   open_agent_id = 0;
   open_event_template_id = 0;
+  open_trigger_id = 0;
+  default_agent = Agent();
+  labels.clear();
+  tags.clear();
   current_time = 0;
   relation_default.clear();
   event_templates.clear();
   parameter_aliases.clear();
   agents.clear();
   events.clear();
+  triggers.clear();
 }

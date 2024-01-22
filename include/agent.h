@@ -36,6 +36,7 @@ struct Agent
 
   Variable &operator[](const std::string &name);
   void operator=(const Agent &other);
+  bool operator==(const Agent &other) const;
 };
 
 #endif // AGENT_H

@@ -15,134 +15,80 @@ std::string API::command(std::string command)
   std::vector<std::string> tokens;
   for (auto &str : Utils::split(command, " "))
     tokens.push_back(Utils::toUpper(str));
-  if (tokens[0] == "HELP")
-  {
-    ret = HELP();
+
+#define COMMAND_0(name)        \
+  else if (tokens[0] == #name) \
+  {                            \
+    ret = name();              \
   }
-  else if (tokens[0] == "JSON")
+#define COMMAND_1(name, caster)      \
+  else if (tokens[0] == #name)       \
+  {                                  \
+    if (tokens.size() > 1)           \
+    {                                \
+      ret = name(caster(tokens[1])); \
+    }                                \
+    else                             \
+    {                                \
+      ret = "Missing argument";      \
+    }                                \
+  }
+#define COMMAND_2(name, caster1, caster2)                 \
+  else if (tokens[0] == #name)                            \
+  {                                                       \
+    if (tokens.size() > 2)                                \
+    {                                                     \
+      ret = name(caster1(tokens[1]), caster2(tokens[2])); \
+    }                                                     \
+    else                                                  \
+    {                                                     \
+      ret = "Missing argument";                           \
+    }                                                     \
+  }
+#define COMMAND_3(name, caster1, caster2, caster3)                            \
+  else if (tokens[0] == #name)                                                \
+  {                                                                           \
+    if (tokens.size() > 3)                                                    \
+    {                                                                         \
+      ret = name(caster1(tokens[1]), caster2(tokens[2]), caster3(tokens[3])); \
+    }                                                                         \
+    else                                                                      \
+    {                                                                         \
+      ret = "Missing argument";                                               \
+    }                                                                         \
+  }
+
+  if (tokens[0] == "JSON")
   {
     if (tokens.size() > 1)
     {
-      ret = JSON(tokens[1]);
+      std::string all_json_string = command.substr(5);
+      ret = JSON(all_json_string);
     }
     else
     {
       ret = "Missing argument";
     }
   }
-  else if (tokens[0] == "PROCEED")
-  {
-    if (tokens.size() > 1)
-    {
-      ret = PROCEED(std::stod(tokens[1]));
-    }
-    else
-    {
-      ret = "Missing argument";
-    }
-  }
-  else if (tokens[0] == "CLEAR")
-  {
-    ret = CLEAR();
-  }
-  else if (tokens[0] == "POP_EVENT")
-  {
-    if (tokens.size() > 1)
-    {
-      ret = POP_EVENT(std::stoi(tokens[1]));
-    }
-    else
-    {
-      ret = POP_EVENT();
-    }
-  }
-  else if (tokens[0] == "LIST_AGENTS")
-  {
-    ret = LIST_AGENTS();
-  }
-  else if (tokens[0] == "LIST_EVENTS")
-  {
-    ret = LIST_EVENTS();
-  }
-  else if (tokens[0] == "LIST_EVENT_TEMPLATES")
-  {
-    ret = LIST_EVENT_TEMPLATES();
-  }
-  else if (tokens[0] == "LIST_PARAMETER_ALIASES")
-  {
-    ret = LIST_PARAMETER_ALIASES();
-  }
-  else if (tokens[0] == "LIST_PARAMETER_ALIASES")
-  {
-    ret = LIST_PARAMETER_ALIASES();
-  }
-  else if (tokens[0] == "UPDATE_AGENT_PARAMETER")
-  {
-    if (tokens.size() > 3)
-    {
-      ret = UPDATE_AGENT_PARAMETER(std::stoi(tokens[1]), tokens[2], std::stod(tokens[3]));
-    }
-    else
-    {
-      ret = "Missing argument";
-    }
-  }
-  else if (tokens[0] == "DESCRIBE_AGENT")
-  {
-    if (tokens.size() > 1)
-    {
-      ret = DESCRIBE_AGENT(std::stoi(tokens[1]));
-    }
-    else
-    {
-      ret = "Missing argument";
-    }
-  }
-  else if (tokens[0] == "DESCRIBE_EVENT_TEMPLATE")
-  {
-    if (tokens.size() > 1)
-    {
-      ret = DESCRIBE_EVENT_TEMPLATE(std::stoi(tokens[1]));
-    }
-    else
-    {
-      ret = "Missing argument";
-    }
-  }
-  else if (tokens[0] == "LIST_STORIES")
-  {
-    ret = LIST_STORIES();
-  }
-  else if (tokens[0] == "SELECT_STORY")
-  {
-    if (tokens.size() > 1)
-    {
-      ret = SELECT_STORY(std::stoi(tokens[1]));
-    }
-    else
-    {
-      ret = "Missing argument";
-    }
-  }
-  else if (tokens[0] == "NEW_STORY")
-  {
-    ret = NEW_STORY();
-  }
-  else if (tokens[0] == "DEL_STORY")
-  {
-    if (tokens.size() > 1)
-    {
-      ret = DEL_STORY(std::stoi(tokens[1]));
-    }
-    else
-    {
-      ret = "Missing argument";
-    }
-  }
+  COMMAND_1(PROCEED, std::stod)
+  COMMAND_0(CLEAR)
+  COMMAND_0(HELP)
+  COMMAND_1(POP_EVENT, std::stoi)
+  COMMAND_0(LIST_AGENTS)
+  COMMAND_0(LIST_EVENTS)
+  COMMAND_0(LIST_EVENT_TEMPLATES)
+  COMMAND_0(LIST_PARAMETER_ALIASES)
+  COMMAND_3(UPDATE_AGENT_PARAMETER, std::stoi, , std::stod)
+  COMMAND_3(UPDATE_AGENT_LABEL, std::stoi, , )
+  COMMAND_1(DESCRIBE_AGENT, std::stoi)
+  COMMAND_0(LIST_STORIES)
+  COMMAND_1(SELECT_STORY, std::stoi)
+  COMMAND_0(NEW_STORY)
+  COMMAND_1(DEL_STORY, std::stoi)
   else if (tokens[0] == "EXIT")
   {
+    ret = "OK";
     on_exit();
-    ret = "EXIT";
   }
   else
   {
@@ -150,22 +96,32 @@ std::string API::command(std::string command)
   }
   if (ret.size() == 0)
     ret = "\n";
+  else if (ret.back() != '\n')
+    ret += "\n";
   return ret;
 }
 std::string API::HELP()
 {
-  std::string ret = "HELP\n";
-  ret += "JSON <filename>\n";
-  ret += "PROCEED <time>\n";
+  // Returns all comands and their descriptions
+  std::string ret = "\n";
+  ret += "JSON <JSON_STRING>\n";
+  ret += "PROCEED <TIME>\n";
   ret += "CLEAR\n";
-  ret += "POP_EVENT <amount>\n";
+  ret += "HELP\n";
+  ret += "POP_EVENT <AMOUNT>\n";
   ret += "LIST_AGENTS\n";
   ret += "LIST_EVENTS\n";
   ret += "LIST_EVENT_TEMPLATES\n";
   ret += "LIST_PARAMETER_ALIASES\n";
-  ret += "LIST_PARAMETER_ALIASES\n";
-  ret += "UPDATE_AGENT_PARAMETER <agent_id> <parameter> <value>\n";
-  ret += "DESCRIBE_AGENT <agent_id>\n";
+  ret += "UPDATE_AGENT_PARAMETER <AGENT_ID> <PARAMETER> <VALUE>\n";
+  ret += "UPDATE_AGENT_LABEL <AGENT_ID> <KEY> <VALUE>\n";
+  ret += "DESCRIBE_AGENT <AGENT_ID>\n";
+  ret += "LIST_STORIES\n";
+  ret += "SELECT_STORY <STORY_ID>\n";
+  ret += "NEW_STORY\n";
+  ret += "DEL_STORY <STORY_ID>\n";
+  ret += "EXIT\n";
+  ret.pop_back();
   return ret;
 }
 std::string API::JSON(std::string json_string)
@@ -320,6 +276,63 @@ std::string API::DESCRIBE_AGENT(int agent_id)
     }
     ret.pop_back();
     return ret;
+  }
+}
+std::string API::UPDATE_AGENT_LABEL(int agent_id, std::string key, std::string value)
+{
+  bool to_remove = (value.size() == 0);
+  if (key.size() == 0)
+    return "Key cannot be empty";
+  Story &story = getCurrentStory();
+  if (story.agents.find(agent_id) == story.agents.end())
+    return "Agent not found";
+  else
+  {
+    Agent &agent = story.agents[agent_id];
+    if (to_remove)
+    {
+      if (agent.labels.find(key) == agent.labels.end())
+        return "Label not found";
+      else
+      {
+        agent.labels.erase(key);
+        return "OK";
+      }
+    }
+    else
+    {
+      agent.labels[key] = value;
+      return "OK";
+    }
+  }
+}
+std::string API::ADD_AGENT_TAG(int agent_id, std::string tag)
+{
+  Story &story = getCurrentStory();
+  if (story.agents.find(agent_id) == story.agents.end())
+    return "Agent not found";
+  else
+  {
+    Agent &agent = story.agents[agent_id];
+    agent.tags.insert(tag);
+    return "OK";
+  }
+}
+std::string API::REMOVE_AGENT_TAG(int agent_id, std::string tag)
+{
+  Story &story = getCurrentStory();
+  if (story.agents.find(agent_id) == story.agents.end())
+    return "Agent not found";
+  else
+  {
+    Agent &agent = story.agents[agent_id];
+    if (agent.tags.find(tag) == agent.tags.end())
+      return "Tag not found";
+    else
+    {
+      agent.tags.erase(tag);
+      return "OK";
+    }
   }
 }
 std::string API::DESCRIBE_EVENT_TEMPLATE(int event_template_id)
