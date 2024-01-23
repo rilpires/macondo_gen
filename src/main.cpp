@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     api.onExit([&quit]()
                { quit = true; });
     api.onOutput([](std::string s)
-                 { std::cout << s << std::endl; });
+                 { std::cout << s; });
 
     std::cout << "Type HELP for a list of commands" << std::endl;
     while (!quit)

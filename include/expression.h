@@ -56,7 +56,7 @@ struct Expression
   // gonna private this when class'ing it up
   static Expression *fromTokens(const std::vector<Token> &tokens);
 
-  Variable evaluate(const Agent &agent1, const Agent &agent2) const;
+  Variable evaluate(const Agent &agent) const;
 
   std::string toString() const;
 };

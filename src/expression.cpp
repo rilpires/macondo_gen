@@ -287,7 +287,7 @@ Expression *Expression::fromTokens(const std::vector<Token> &tokens)
   return NULL;
 };
 
-Variable Expression::evaluate(const Agent &agent1, const Agent &agent2) const
+Variable Expression::evaluate(const Agent &agent) const
 {
 #ifdef DEBUG
   // std::cout << "Evaluating " << expression_string << " : " << ret << std::endl;
@@ -298,7 +298,7 @@ Variable Expression::evaluate(const Agent &agent1, const Agent &agent2) const
   case EXPRESSION_VARIABLE:
   {
     // In the future this could be a dynamic function
-    return agent1.getVariable(token.token_string);
+    return agent.getVariable(token.token_string);
   }
   case EXPRESSION_CONSTANT:
   {
@@ -310,11 +310,11 @@ Variable Expression::evaluate(const Agent &agent1, const Agent &agent2) const
     auto expr2 = subexpressions.second;
     if (expr1->token.token_type == EXPRESSION_TOKEN_SELF)
     {
-      return agent1.getVariable(expr2->token.token_string);
+      return agent.getVariable(expr2->token.token_string);
     }
     else if (expr1->token.token_type == EXPRESSION_TOKEN_OTHER)
     {
-      return agent2.getVariable(expr2->token.token_string);
+      return agent.getOtherAgent().getVariable(expr2->token.token_string);
     }
     else
     {
@@ -323,35 +323,35 @@ Variable Expression::evaluate(const Agent &agent1, const Agent &agent2) const
   }
   case EXPRESSION_TOKEN_ABS:
   {
-    auto arg1 = subexpressions.first->evaluate(agent1, agent2);
+    auto arg1 = subexpressions.first->evaluate(agent);
     return Variable(abs(arg1.toDouble()));
   }
   case EXPRESSION_OPERATOR_ADD:
   {
-    auto arg1 = subexpressions.first->evaluate(agent1, agent2);
-    auto arg2 = subexpressions.second->evaluate(agent1, agent2);
+    auto arg1 = subexpressions.first->evaluate(agent);
+    auto arg2 = subexpressions.second->evaluate(agent);
     return arg1 + arg2;
   }
   case EXPRESSION_OPERATOR_SUBTRACT:
   {
-    auto arg1 = subexpressions.first->evaluate(agent1, agent2);
-    auto arg2 = subexpressions.second->evaluate(agent1, agent2);
+    auto arg1 = subexpressions.first->evaluate(agent);
+    auto arg2 = subexpressions.second->evaluate(agent);
     return arg1 - arg2;
   }
   case EXPRESSION_OPERATOR_MULTIPLY:
   {
-    auto arg1 = subexpressions.first->evaluate(agent1, agent2);
-    auto arg2 = subexpressions.second->evaluate(agent1, agent2);
+    auto arg1 = subexpressions.first->evaluate(agent);
+    auto arg2 = subexpressions.second->evaluate(agent);
     return arg1 * arg2;
   }
   case EXPRESSION_OPERATOR_DIVIDE:
   {
-    auto arg1 = subexpressions.first->evaluate(agent1, agent2);
-    auto arg2 = subexpressions.second->evaluate(agent1, agent2);
+    auto arg1 = subexpressions.first->evaluate(agent);
+    auto arg2 = subexpressions.second->evaluate(agent);
     return arg1 / arg2;
   }
   case EXPRESSION_TOKEN_NOOP:
-    return subexpressions.first->evaluate(agent1, agent2);
+    return subexpressions.first->evaluate(agent);
   };
 
   return Variable(0);
