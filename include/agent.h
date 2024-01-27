@@ -32,6 +32,9 @@ struct Agent
   Agent &updateVariable(std::string name, Variable value);
   Variable getVariable(std::string name) const;
 
+  // May return itself if no other agent is specified
+  Agent &getOtherAgent();
+  const Agent &getOtherAgent() const;
   void updateRelationship(int other_agent_id, std::string name, Variable value);
 
   Variable &operator[](const std::string &name);

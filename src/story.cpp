@@ -136,7 +136,8 @@ void Story::proceed(double duration)
     {
       for (auto &agent : agents)
       {
-        double mean = event_template.second.expression.evaluate(agent.second, agent.second).toDouble();
+        agent.second.other_agent_id = -1;
+        double mean = event_template.second.expression.evaluate(agent.second).toDouble();
         double now = current_time + Random::exponential(mean);
         while ((mean > 0) && (now < current_time + duration))
         {
@@ -154,25 +155,25 @@ void Story::proceed(double duration)
     }
     else
     {
-      for (auto &agent : agents)
+      for (auto &agent_entry : agents)
       {
-        for (auto &other_agent : agents)
+        for (auto &other_agent_entry : agents)
         {
-          if (agent.second.id == other_agent.second.id)
+          if (agent_entry.second.id == other_agent_entry.second.id)
             continue;
-          if (event_template.second.type == EVENT_TYPE_UNIDIRECTIONAL)
-            if (agent.second.id > other_agent.second.id)
+          if (event_template.second.type == EVENT_TYPE_BIDIRECTIONAL)
+            if (agent_entry.second.id > other_agent_entry.second.id)
               continue;
-          agent.second.other_agent_id = other_agent.second.id;
-          double mean = event_template.second.expression.evaluate(agent.second, other_agent.second).toDouble();
+          agent_entry.second.other_agent_id = other_agent_entry.second.id;
+          double mean = event_template.second.expression.evaluate(agent_entry.second).toDouble();
           double now = current_time + Random::exponential(mean);
           while ((mean > 0) && (now < current_time + duration))
           {
             Event event({
                 now,
                 event_template.second,
-                agent.second.id,
-                other_agent.second.id,
+                agent_entry.second.id,
+                other_agent_entry.second.id,
                 mean,
             });
             events.push_back(event);
@@ -206,22 +207,16 @@ void Story::triggerEvent(Event &event)
     Trigger &trigger = triggers.at(trigger_id);
     Agent &agent1 = event.getAgent();
     Agent &agent2 = event.getOtherAgent();
+    agent1.other_agent_id = agent2.id;
+    agent2.other_agent_id = agent1.id;
 
     if (agent1 == Agent::invalid_agent)
       continue;
 
     for (const auto &trigger_param : trigger.on_self_expressions)
     {
-      if (agent2 == Agent::invalid_agent)
-      {
-        Variable value = trigger_param.second.evaluate(agent1, agent1);
-        agent1.updateVariable(trigger_param.first, value);
-      }
-      else
-      {
-        Variable value = trigger_param.second.evaluate(agent1, agent2);
-        agent1.updateVariable(trigger_param.first, value);
-      }
+      Variable value = trigger_param.second.evaluate(agent1);
+      agent1.updateVariable(trigger_param.first, value);
     }
 
     if (agent2 == Agent::invalid_agent)
@@ -229,7 +224,7 @@ void Story::triggerEvent(Event &event)
 
     for (const auto &trigger_param : trigger.on_other_expressions)
     {
-      Variable value = trigger_param.second.evaluate(agent2, agent1);
+      Variable value = trigger_param.second.evaluate(agent2);
       agent2.updateVariable(trigger_param.first, value);
     }
   }

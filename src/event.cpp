@@ -9,9 +9,6 @@ EventTemplate::EventTemplate(int id, json &event_template_json) : id(id)
   {
     // pretty name
     pretty_name = event_template_json["name"];
-    // reason
-    if (event_template_json.contains("reason") && event_template_json["reason"].is_string())
-      reason = event_template_json["reason"].get<std::string>();
     // type
     this->type = EVENT_TYPE_SELF;
     if (event_template_json.contains("type") && event_template_json["type"].is_string())
@@ -45,12 +42,11 @@ EventTemplate::EventTemplate(int id, json &event_template_json) : id(id)
 
 std::string Event::buildExplanation()
 {
-  return Utils::replaceAll("Event <EVENT> was triggered by agent <AGENT><OTHER_AGENT><REASON><RATE>",
+  return Utils::replaceAll("Event <EVENT> was triggered by agent <AGENT><OTHER_AGENT><RATE>",
                            StringMap({
                                {"<EVENT>", _template.pretty_name},
                                {"<AGENT>", getAgent().getName()},
                                {"<OTHER_AGENT>", (other_agent_id == -1) ? "" : (" towards " + getOtherAgent().getName())},
-                               {"<REASON>", (_template.reason.size() == 0) ? "" : (" due to " + _template.reason)},
                                {"<RATE>", " (rate " + std::to_string(rate) + ")"},
                            }));
 }

@@ -69,22 +69,31 @@ Variable Agent::getVariable(std::string name) const
   {
     return parameters.find(name)->second;
   }
-  else if ((story != nullptr) && (story->parameter_aliases.size() > 0) && (story->parameter_aliases.find(name) != story->parameter_aliases.end()))
+  else if ((story != nullptr) && (story->parameter_aliases.find(name) != story->parameter_aliases.end()))
   {
     const Expression &e = (story->parameter_aliases.find(name)->second);
-    return e.evaluate(*this, *this);
+    return e.evaluate(*this);
   }
-  else if (other_agent_id != -1 &&
-           (relationships.find(other_agent_id) != relationships.end()) &&
-           (relationships.at(other_agent_id).find(name) != relationships.at(other_agent_id).end()))
+  else if (other_agent_id >= 0 && story != nullptr)
   {
-    return relationships.at(other_agent_id).at(name);
+    auto default_params = story->relation_default;
+    if (default_params.find(name) != default_params.end())
+    {
+      if (
+          (relationships.find(other_agent_id) != relationships.end()) &&
+          (relationships.at(other_agent_id).find(name) != relationships.at(other_agent_id).end()))
+      {
+        return relationships.at(other_agent_id).at(name);
+      }
+      else
+      {
+        return default_params.at(name);
+      }
+    }
   }
-  else
-  {
-    std::cerr << "Variable " << name << " not found" << std::endl;
-    return Variable();
-  }
+
+  std::cerr << "Variable " << name << " not found" << std::endl;
+  return Variable();
 };
 
 bool Agent::hasVariable(std::string name) const
@@ -101,6 +110,30 @@ bool Agent::hasVariable(std::string name) const
   }
 }
 
+Agent &Agent::getOtherAgent()
+{
+  if ((other_agent_id < 0) || (story == nullptr))
+    return *this;
+  else
+  {
+    if (story->agents.find(other_agent_id) == story->agents.end())
+      return *this;
+    else
+      return story->agents.at(other_agent_id);
+  }
+}
+const Agent &Agent::getOtherAgent() const
+{
+  if ((other_agent_id < 0) || (story == nullptr))
+    return *this;
+  else
+  {
+    if (story->agents.find(other_agent_id) == story->agents.end())
+      return *this;
+    else
+      return story->agents.at(other_agent_id);
+  }
+}
 void Agent::updateRelationship(int other_agent_id, std::string name, Variable value)
 {
   if (other_agent_id == id)

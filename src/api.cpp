@@ -7,6 +7,15 @@ API::API()
   current_story_id = 0;
 }
 
+void API::onExit(std::function<void()> callback)
+{
+  on_exit = callback;
+}
+void API::onOutput(std::function<void(std::string)> callback)
+{
+  on_output = callback;
+}
+
 std::string API::command(std::string command)
 {
   if (command.size() == 0)
@@ -14,49 +23,29 @@ std::string API::command(std::string command)
   std::string ret = "";
   std::vector<std::string> tokens;
   for (auto &str : Utils::split(command, " "))
-    tokens.push_back(Utils::toUpper(str));
-
-#define COMMAND_0(name)        \
-  else if (tokens[0] == #name) \
-  {                            \
-    ret = name();              \
+    tokens.push_back((tokens.size() == 0) ? Utils::toUpper(str) : str);
+#define ELSEIF_COMMAND(name, argc, retcall) \
+  else if (tokens[0] == #name)              \
+  {                                         \
+    if (tokens.size() > argc)               \
+    {                                       \
+      ret = retcall;                        \
+    }                                       \
+    else                                    \
+    {                                       \
+      ret = "Missing argument";             \
+    }                                       \
   }
-#define COMMAND_1(name, caster)      \
-  else if (tokens[0] == #name)       \
-  {                                  \
-    if (tokens.size() > 1)           \
-    {                                \
-      ret = name(caster(tokens[1])); \
-    }                                \
-    else                             \
-    {                                \
-      ret = "Missing argument";      \
-    }                                \
-  }
-#define COMMAND_2(name, caster1, caster2)                 \
-  else if (tokens[0] == #name)                            \
-  {                                                       \
-    if (tokens.size() > 2)                                \
-    {                                                     \
-      ret = name(caster1(tokens[1]), caster2(tokens[2])); \
-    }                                                     \
-    else                                                  \
-    {                                                     \
-      ret = "Missing argument";                           \
-    }                                                     \
-  }
-#define COMMAND_3(name, caster1, caster2, caster3)                            \
-  else if (tokens[0] == #name)                                                \
-  {                                                                           \
-    if (tokens.size() > 3)                                                    \
-    {                                                                         \
-      ret = name(caster1(tokens[1]), caster2(tokens[2]), caster3(tokens[3])); \
-    }                                                                         \
-    else                                                                      \
-    {                                                                         \
-      ret = "Missing argument";                                               \
-    }                                                                         \
-  }
+#define COMMAND_0(name) \
+  ELSEIF_COMMAND(name, 0, name())
+#define COMMAND_1(name, caster1) \
+  ELSEIF_COMMAND(name, 1, name(caster1(tokens[1])))
+#define COMMAND_2(name, caster1, caster2) \
+  ELSEIF_COMMAND(name, 2, name(caster1(tokens[1]), caster2(tokens[2])))
+#define COMMAND_3(name, caster1, caster2, caster3) \
+  ELSEIF_COMMAND(name, 3, name(caster1(tokens[1]), caster2(tokens[2]), caster3(tokens[3])))
+#define COMMAND_4(name, caster1, caster2, caster3, caster4) \
+  ELSEIF_COMMAND(name, 4, name(caster1(tokens[1]), caster2(tokens[2]), caster3(tokens[3]), caster4(tokens[4])))
 
   if (tokens[0] == "JSON")
   {
@@ -75,12 +64,16 @@ std::string API::command(std::string command)
   COMMAND_0(HELP)
   COMMAND_1(POP_EVENT, std::stoi)
   COMMAND_0(LIST_AGENTS)
-  COMMAND_0(LIST_EVENTS)
-  COMMAND_0(LIST_EVENT_TEMPLATES)
   COMMAND_0(LIST_PARAMETER_ALIASES)
   COMMAND_3(UPDATE_AGENT_PARAMETER, std::stoi, , std::stod)
   COMMAND_3(UPDATE_AGENT_LABEL, std::stoi, , )
+  COMMAND_4(UPDATE_AGENT_RELATION, std::stoi, std::stoi, , std::stod)
+  COMMAND_2(ADD_AGENT_TAG, std::stoi, )
+  COMMAND_2(REMOVE_AGENT_TAG, std::stoi, )
   COMMAND_1(DESCRIBE_AGENT, std::stoi)
+  COMMAND_2(DESCRIBE_AGENT_RELATION, std::stoi, std::stoi)
+  COMMAND_0(LIST_EVENT_TEMPLATES)
+  COMMAND_1(DESCRIBE_EVENT_TEMPLATE, std::stoi)
   COMMAND_0(LIST_STORIES)
   COMMAND_1(SELECT_STORY, std::stoi)
   COMMAND_0(NEW_STORY)
@@ -94,6 +87,8 @@ std::string API::command(std::string command)
   {
     ret = "Unknown command";
   }
+  while (ret.size() > 1 && ret[0] == '\n')
+    ret.erase(ret.begin());
   if (ret.size() == 0)
     ret = "\n";
   else if (ret.back() != '\n')
@@ -103,23 +98,46 @@ std::string API::command(std::string command)
 std::string API::HELP()
 {
   // Returns all comands and their descriptions
+  // PROCEED
+  // CLEAR
+  // HELP
+  // POP_EVENT
+  // LIST_AGENTS
+  // LIST_PARAMETER_ALIASES
+  // UPDATE_AGENT_PARAMETER
+  // UPDATE_AGENT_LABEL
+  // UPDATE_AGENT_RELATION
+  // ADD_AGENT_TAG
+  // REMOVE_AGENT_TAG
+  // DESCRIBE_AGENT
+  // DESCRIBE_AGENT_RELATION
+  // LIST_EVENT_TEMPLATES
+  // DESCRIBE_EVENT_TEMPLATE
+  // LIST_STORIES
+  // SELECT_STORY
+  // NEW_STORY
+  // DEL_STORY
   std::string ret = "\n";
-  ret += "JSON <JSON_STRING>\n";
-  ret += "PROCEED <TIME>\n";
+  ret += "JSON <json_string>\n";
+  ret += "PROCEED <time>\n";
   ret += "CLEAR\n";
   ret += "HELP\n";
-  ret += "POP_EVENT <AMOUNT>\n";
+  ret += "POP_EVENT <amount>\n";
   ret += "LIST_AGENTS\n";
-  ret += "LIST_EVENTS\n";
-  ret += "LIST_EVENT_TEMPLATES\n";
   ret += "LIST_PARAMETER_ALIASES\n";
-  ret += "UPDATE_AGENT_PARAMETER <AGENT_ID> <PARAMETER> <VALUE>\n";
-  ret += "UPDATE_AGENT_LABEL <AGENT_ID> <KEY> <VALUE>\n";
-  ret += "DESCRIBE_AGENT <AGENT_ID>\n";
+  ret += "UPDATE_AGENT_PARAMETER <agent_id> <parameter> <value>\n";
+  ret += "UPDATE_AGENT_LABEL <agent_id> <key> <value>\n";
+  ret += "UPDATE_AGENT_RELATION <agent_id> <other_agent_id> <parameter> <value>\n";
+  ret += "ADD_AGENT_TAG <agent_id> <tag>\n";
+  ret += "REMOVE_AGENT_TAG <agent_id> <tag>\n";
+  ret += "DESCRIBE_AGENT <agent_id>\n";
+  ret += "DESCRIBE_AGENT_RELATION <agent_id> <other_agent_id>\n";
+  ret += "LIST_EVENT_TEMPLATES\n";
+  ret += "DESCRIBE_EVENT_TEMPLATE <event_template_id>\n";
   ret += "LIST_STORIES\n";
-  ret += "SELECT_STORY <STORY_ID>\n";
+  ret += "SELECT_STORY <story_id>\n";
   ret += "NEW_STORY\n";
-  ret += "DEL_STORY <STORY_ID>\n";
+  ret += "DEL_STORY <story_id>\n";
   ret += "EXIT\n";
   ret.pop_back();
   return ret;
@@ -216,7 +234,7 @@ std::string API::POP_EVENT(int amount)
 std::string API::LIST_AGENTS()
 {
   Story &story = getCurrentStory();
-  std::string ret = "\n";
+  std::string ret = "";
   for (auto &agent : story.agents)
   {
     ret += std::to_string(agent.first) + "\n";
@@ -224,17 +242,16 @@ std::string API::LIST_AGENTS()
   ret.pop_back();
   return ret;
 }
-std::string API::LIST_EVENTS()
-{
-  return "TO-DO";
-}
-std::string API::LIST_EVENT_TEMPLATES()
-{
-  return "TO-DO";
-}
 std::string API::LIST_PARAMETER_ALIASES()
 {
-  return "TO-DO";
+  Story &story = getCurrentStory();
+  std::string ret = "\n";
+  for (auto &alias : story.parameter_aliases)
+  {
+    ret += alias.first + " : \"" + alias.second.expression_string + "\"\n";
+  }
+  ret.pop_back();
+  return ret;
 }
 std::string API::UPDATE_AGENT_PARAMETER(int agent_id, std::string parameter, double value)
 {
@@ -253,10 +270,26 @@ std::string API::UPDATE_AGENT_PARAMETER(int agent_id, std::string parameter, dou
     }
   }
 }
+std::string API::UPDATE_AGENT_RELATION(int agent_id, int other_agent_id, std::string parameter, double value)
+{
+  Story &story = getCurrentStory();
+  if (story.agents.find(agent_id) == story.agents.end())
+    return "Agent not found";
+  else if (story.agents.find(other_agent_id) == story.agents.end())
+    return "Other agent not found";
+  else if (story.relation_default.find(parameter) == story.relation_default.end())
+    return "Parameter not found";
+  else
+  {
+    Agent &agent = story.agents[agent_id];
+    agent.relationships[other_agent_id][parameter] = value;
+    return "OK";
+  }
+}
 std::string API::DESCRIBE_AGENT(int agent_id)
 {
   Story &story = getCurrentStory();
-  std::string ret = "\n";
+  std::string ret = "";
   if (story.agents.find(agent_id) == story.agents.end())
     return "Agent not found";
   else
@@ -268,13 +301,36 @@ std::string API::DESCRIBE_AGENT(int agent_id)
     }
     for (auto &alias : story.parameter_aliases)
     {
-      ret += "PARAMETER_ALIAS " + alias.first + " " + alias.second.evaluate(agent, agent).toString() + "\n";
+      ret += "PARAMETER_ALIAS " + alias.first + " " + alias.second.evaluate(agent).toString() + "\n";
     }
     for (auto &label : agent.labels)
     {
-      ret += "LABEL " + label.first + " " + label.second + "\n";
+      ret += "LABEL " + label.first + " : " + label.second + "\n";
+    }
+    for (auto tag_entry : agent.tags)
+    {
+      ret += "TAG " + tag_entry + "\n";
     }
     ret.pop_back();
+    return ret;
+  }
+}
+std::string API::DESCRIBE_AGENT_RELATION(int agent_id, int other_agent_id)
+{
+  Story &story = getCurrentStory();
+  std::string ret = "\n";
+  if (story.agents.find(agent_id) == story.agents.end())
+    return "Agent not found";
+  else if (story.agents.find(other_agent_id) == story.agents.end())
+    return "Agent not found";
+  else
+  {
+    Agent &agent1 = story.agents[agent_id];
+    agent1.other_agent_id = other_agent_id;
+    for (auto &relation_entry : story.relation_default)
+    {
+      ret += "RELATION " + relation_entry.first + " " + agent1.getVariable(relation_entry.first).toString() + "\n";
+    }
     return ret;
   }
 }
@@ -335,6 +391,17 @@ std::string API::REMOVE_AGENT_TAG(int agent_id, std::string tag)
     }
   }
 }
+std::string API::LIST_EVENT_TEMPLATES()
+{
+  Story &story = getCurrentStory();
+  std::string ret = "\n";
+  for (auto &event_template_entry : story.event_templates)
+  {
+    ret += std::to_string(event_template_entry.first) + " " + event_template_entry.second.pretty_name + "\n";
+  }
+  ret.pop_back();
+  return ret;
+}
 std::string API::DESCRIBE_EVENT_TEMPLATE(int event_template_id)
 {
   Story &story = getCurrentStory();
@@ -346,8 +413,27 @@ std::string API::DESCRIBE_EVENT_TEMPLATE(int event_template_id)
     std::string ret = "\n";
     ret += "EVENT_TEMPLATE " + std::to_string(event_template.id) + "\n";
     ret += "NAME " + event_template.pretty_name + "\n";
-    ret += "REASON " + event_template.reason + "\n";
-    ret += "EXPRESSION " + event_template.expression.expression_string + "\n";
+    switch (event_template.type)
+    {
+    case EVENT_TYPE_SELF:
+      ret += "TYPE self\n";
+      break;
+    case EVENT_TYPE_UNIDIRECTIONAL:
+      ret += "TYPE unidirectional\n";
+      break;
+    case EVENT_TYPE_BIDIRECTIONAL:
+      ret += "TYPE bidirectional\n";
+      break;
+    }
+    ret += "EXPRESSION \"" + event_template.expression.expression_string + "\"\n";
+    for (auto label_entry : event_template.labels)
+    {
+      ret += "LABEL " + label_entry.first + " : " + label_entry.second + "\n";
+    }
+    for (auto tag_entry : event_template.tags)
+    {
+      ret += "TAG " + tag_entry + "\n";
+    }
     ret.pop_back();
     return ret;
   }
