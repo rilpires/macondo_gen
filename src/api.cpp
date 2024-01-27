@@ -234,7 +234,7 @@ std::string API::POP_EVENT(int amount)
 std::string API::LIST_AGENTS()
 {
   Story &story = getCurrentStory();
-  std::string ret = "";
+  std::string ret = "\n";
   for (auto &agent : story.agents)
   {
     ret += std::to_string(agent.first) + "\n";
@@ -289,7 +289,7 @@ std::string API::UPDATE_AGENT_RELATION(int agent_id, int other_agent_id, std::st
 std::string API::DESCRIBE_AGENT(int agent_id)
 {
   Story &story = getCurrentStory();
-  std::string ret = "";
+  std::string ret = "\n";
   if (story.agents.find(agent_id) == story.agents.end())
     return "Agent not found";
   else
