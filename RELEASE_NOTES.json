@@ -1,7 +1,10 @@
 {
-  "current_version": "0.0.2",
-  "latest_version": "0.0.2",
+  "current_version": "0.0.3",
+  "latest_version": "0.0.3",
   "changelog": {
+    "0.0.3": [
+      "Fixing a crash on LIST_AGENTS when there are no agents"
+    ],
     "0.0.2": [
       "DESCRIBE_EVENT_TEMPLATE now also shows the event template's type (self, unidirectional or bidirectional)"
     ],
