@@ -1,3 +1,35 @@
 {
-  "current_version": "0.0.1"
+  "current_version": "0.0.2",
+  "latest_version": "0.0.2",
+  "changelog": {
+    "0.0.2": [
+      "DESCRIBE_EVENT_TEMPLATE now also shows the event template's type (self, unidirectional or bidirectional)"
+    ],
+    "0.0.1": [
+      "Initial set of the API is ready",
+      [
+        "LIST_STORIES",
+        "SELECT_STORY",
+        "NEW_STORY",
+        "DEL_STORY",
+        "HELP",
+        "JSON",
+        "PROCEED",
+        "CLEAR",
+        "LIST_PARAMETER_ALIASES",
+        "POP_EVENT",
+        "EXIT",
+        "LIST_AGENTS",
+        "UPDATE_AGENT_PARAMETER",
+        "UPDATE_AGENT_RELATION",
+        "UPDATE_AGENT_LABEL",
+        "ADD_AGENT_TAG",
+        "REMOVE_AGENT_TAG",
+        "DESCRIBE_AGENT",
+        "DESCRIBE_AGENT_RELATION",
+        "LIST_EVENT_TEMPLATES",
+        "DESCRIBE_EVENT_TEMPLATE"
+      ]
+    ]
+  }
 }
