@@ -413,6 +413,18 @@ std::string API::DESCRIBE_EVENT_TEMPLATE(int event_template_id)
     std::string ret = "\n";
     ret += "EVENT_TEMPLATE " + std::to_string(event_template.id) + "\n";
     ret += "NAME " + event_template.pretty_name + "\n";
+    switch (event_template.type)
+    {
+    case EVENT_TYPE_SELF:
+      ret += "TYPE self\n";
+      break;
+    case EVENT_TYPE_UNIDIRECTIONAL:
+      ret += "TYPE unidirectional\n";
+      break;
+    case EVENT_TYPE_BIDIRECTIONAL:
+      ret += "TYPE bidirectional\n";
+      break;
+    }
     ret += "EXPRESSION \"" + event_template.expression.expression_string + "\"\n";
     for (auto label_entry : event_template.labels)
     {
